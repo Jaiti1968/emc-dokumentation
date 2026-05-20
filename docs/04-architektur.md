@@ -1,8 +1,100 @@
 # Architekturübersicht
 
-## Ziel und Zweck
+## Inhaltsverzeichnis
 
-### Projektziel
+- [Architekturübersicht](#architekturübersicht)
+  - [Inhaltsverzeichnis](#inhaltsverzeichnis)
+  - [1. Ziel und Zweck](#1-ziel-und-zweck)
+    - [1.1 Projektziel](#11-projektziel)
+    - [1.2 Ausgangssituation](#12-ausgangssituation)
+    - [1.3 Aktueller Betriebsstatus](#13-aktueller-betriebsstatus)
+    - [1.4 Fachlicher Funktionsumfang](#14-fachlicher-funktionsumfang)
+  - [2. Fachliche Systemübersicht](#2-fachliche-systemübersicht)
+    - [2.1 Stammdaten](#21-stammdaten)
+    - [2.2 Kontaktdaten](#22-kontaktdaten)
+    - [2.3 Mitgliedschaft](#23-mitgliedschaft)
+    - [2.4 Datenschutz](#24-datenschutz)
+    - [2.5 Chorkleidung](#25-chorkleidung)
+    - [2.6 Benutzerverwaltung](#26-benutzerverwaltung)
+    - [2.7 Rollenmodell](#27-rollenmodell)
+  - [3. Technische Gesamtarchitektur](#3-technische-gesamtarchitektur)
+    - [3.1 High-Level Architektur](#31-high-level-architektur)
+    - [3.2 Architekturprinzipien](#32-architekturprinzipien)
+    - [3.3 Betriebsunterstützende Komponenten](#33-betriebsunterstützende-komponenten)
+  - [4. Komponentenübersicht](#4-komponentenübersicht)
+    - [4.1 Frontend](#41-frontend)
+    - [4.2 Backend](#42-backend)
+    - [4.3 Datenbank](#43-datenbank)
+    - [4.4 Infrastruktur](#44-infrastruktur)
+  - [5. Container- und Infrastrukturarchitektur](#5-container--und-infrastrukturarchitektur)
+    - [5.1 EMC-Anwendungscontainer](#51-emc-anwendungscontainer)
+    - [5.2 Datenhaltungscontainer](#52-datenhaltungscontainer)
+    - [5.3 Betriebs- und Administrationscontainer](#53-betriebs--und-administrationscontainer)
+    - [5.4 Exponierte Ports](#54-exponierte-ports)
+  - [6. Docker-Netzwerkarchitektur](#6-docker-netzwerkarchitektur)
+    - [6.1 EMC Hauptnetzwerk](#61-emc-hauptnetzwerk)
+    - [6.2 Mitglieder des EMC Netzwerks](#62-mitglieder-des-emc-netzwerks)
+    - [6.3 Kommunikationsbeziehungen](#63-kommunikationsbeziehungen)
+      - [DEV](#dev)
+      - [PROD](#prod)
+    - [Monitoring](#monitoring)
+    - [6.4 Weitere Docker-Netzwerke](#64-weitere-docker-netzwerke)
+      - [mariadb\_default](#mariadb_default)
+      - [uptime-kuma\_default](#uptime-kuma_default)
+  - [7. Frontend-Backend-Kommunikation](#7-frontend-backend-kommunikation)
+    - [DEV](#dev-1)
+    - [PROD](#prod-1)
+  - [8. Authentifizierungs- und Sicherheitsarchitektur](#8-authentifizierungs--und-sicherheitsarchitektur)
+    - [8.1 Grundprinzip](#81-grundprinzip)
+    - [8.2 Authentifizierungsendpunkte](#82-authentifizierungsendpunkte)
+    - [8.3 Session-Verhalten](#83-session-verhalten)
+    - [8.4 Rollenmodell](#84-rollenmodell)
+    - [8.5 Backend-Autorisierung](#85-backend-autorisierung)
+    - [8.6 Frontend-Autorisierung](#86-frontend-autorisierung)
+    - [8.7 Passwortsicherheit](#87-passwortsicherheit)
+    - [8.8 CSRF](#88-csrf)
+    - [8.9 Login-Sicherheit](#89-login-sicherheit)
+  - [9. API-Architektur](#9-api-architektur)
+    - [9.1 Auth API](#91-auth-api)
+    - [9.2 Mitglieder API](#92-mitglieder-api)
+    - [9.3 Lookup API](#93-lookup-api)
+    - [9.4 Admin API](#94-admin-api)
+  - [10. Frontend-Architektur](#10-frontend-architektur)
+    - [10.1 Technische Bausteine](#101-technische-bausteine)
+    - [10.2 Verantwortlichkeiten](#102-verantwortlichkeiten)
+    - [10.3 Auto-Save](#103-auto-save)
+  - [11. Backend-Architektur](#11-backend-architektur)
+    - [11.1 Schichtenmodell](#111-schichtenmodell)
+    - [11.2 Verantwortlichkeiten](#112-verantwortlichkeiten)
+    - [11.3 Transaktionen](#113-transaktionen)
+    - [11.4 Fehlerbehandlung](#114-fehlerbehandlung)
+    - [11.5 Request-ID Logging](#115-request-id-logging)
+  - [12. Datenbankarchitektur](#12-datenbankarchitektur)
+    - [12.1 Umgebungen](#121-umgebungen)
+    - [12.2 Fachtabellen](#122-fachtabellen)
+    - [12.3 Lookup Tabellen](#123-lookup-tabellen)
+    - [12.4 Benutzerverwaltung](#124-benutzerverwaltung)
+  - [13. Monitoring](#13-monitoring)
+    - [13.1 Überwachte Komponenten](#131-überwachte-komponenten)
+    - [13.2 Backend Monitoring](#132-backend-monitoring)
+    - [13.3 Benachrichtigung](#133-benachrichtigung)
+  - [14. Testing](#14-testing)
+    - [Frontend](#frontend)
+    - [Backend](#backend)
+  - [15. Architekturentscheidungen](#15-architekturentscheidungen)
+    - [15.1 Spring Boot statt Node.js](#151-spring-boot-statt-nodejs)
+    - [15.2 Session statt JWT](#152-session-statt-jwt)
+    - [15.3 JdbcTemplate statt JPA](#153-jdbctemplate-statt-jpa)
+    - [15.4 nginx Reverse Proxy](#154-nginx-reverse-proxy)
+    - [15.5 Docker auf NAS](#155-docker-auf-nas)
+    - [15.6 MariaDB Port 3306 bewusst offen](#156-mariadb-port-3306-bewusst-offen)
+  - [16. Geplante Architektur-Erweiterungen](#16-geplante-architektur-erweiterungen)
+
+---
+
+## 1. Ziel und Zweck
+
+### 1.1 Projektziel
 
 Die EMC Mitgliederverwaltung ist eine moderne webbasierte Anwendung zur Verwaltung der Mitgliederdaten des EMC.
 
@@ -12,7 +104,7 @@ Die Anwendung stellt eine browserbasierte Arbeitsoberfläche für die Mitglieder
 
 ---
 
-### Ausgangssituation
+### 1.2 Ausgangssituation
 
 Historisch erfolgt die Mitgliederverwaltung über eine Microsoft Access Anwendung.
 
@@ -39,7 +131,7 @@ Die bestehende Access-Lösung bleibt zunächst für bestimmte Berichts- und Ausw
 
 ---
 
-### Aktueller Betriebsstatus
+### 1.3 Aktueller Betriebsstatus
 
 Die Anwendung befindet sich aktuell in einem produktivnahen Pilotbetrieb.
 
@@ -55,7 +147,7 @@ Die Lösung ist damit noch kein vollständig ausgerollter Mehrbenutzer-Produktiv
 
 ---
 
-### Fachlicher Funktionsumfang
+### 1.4 Fachlicher Funktionsumfang
 
 Aktuell umgesetzt:
 
@@ -80,17 +172,15 @@ Geplante Erweiterungen:
 
 ---
 
-## Fachliche Systemübersicht
+## 2. Fachliche Systemübersicht
 
 Die Anwendung bildet die fachliche Mitgliederverwaltung des EMC ab.
 
 Zentrales fachliches Objekt ist das **Mitglied**.
 
-Ein Mitglied umfasst mehrere logisch getrennte Verwaltungsbereiche.
-
 ---
 
-### Stammdaten
+### 2.1 Stammdaten
 
 Beinhaltet allgemeine Personendaten:
 
@@ -105,7 +195,7 @@ Beinhaltet allgemeine Personendaten:
 
 ---
 
-### Kontaktdaten
+### 2.2 Kontaktdaten
 
 Beinhaltet Kommunikationsdaten:
 
@@ -118,7 +208,7 @@ Beinhaltet Kommunikationsdaten:
 
 ---
 
-### Mitgliedschaft
+### 2.3 Mitgliedschaft
 
 Beinhaltet vereinsbezogene Zuordnungen:
 
@@ -130,7 +220,7 @@ Beinhaltet vereinsbezogene Zuordnungen:
 
 ---
 
-### Datenschutz
+### 2.4 Datenschutz
 
 Der Bereich Datenschutz bildet MVP-artig datenschutzbezogene Angaben zum Mitglied ab.
 
@@ -141,19 +231,13 @@ Dazu gehören strukturierte Informationen, die innerhalb der Mitgliederverwaltun
 
 ---
 
-### Chorkleidung
+### 2.5 Chorkleidung
 
 Der Bereich Chorkleidung dient der Verwaltung chorspezifischer Kleidungsinformationen.
 
-Beispielsweise:
-
-- Kleidungsstatus
-- Kauf-/Verwaltungsinformationen
-- organisatorische Zuordnungen
-
 ---
 
-### Benutzerverwaltung
+### 2.6 Benutzerverwaltung
 
 Administratoren können Benutzerkonten innerhalb der Anwendung verwalten.
 
@@ -167,7 +251,7 @@ Funktionen:
 
 ---
 
-### Rollenmodell
+### 2.7 Rollenmodell
 
 Das System verwendet ein rollenbasiertes Berechtigungsmodell.
 
@@ -181,11 +265,11 @@ Rechte werden sowohl im Backend als auch im Frontend durchgesetzt.
 
 ---
 
-## Technische Gesamtarchitektur
+## 3. Technische Gesamtarchitektur
 
-Die Anwendung folgt einer klassischen mehrschichtigen Web-Anwendungsarchitektur mit klarer Trennung von Präsentation, Geschäftslogik und Datenhaltung.
+Die Anwendung folgt einer klassischen mehrschichtigen Web-Anwendungsarchitektur.
 
-### High-Level Architektur
+### 3.1 High-Level Architektur
 
 ```mermaid
 graph TD
@@ -201,7 +285,7 @@ graph TD
 
 ---
 
-### Architekturprinzipien
+### 3.2 Architekturprinzipien
 
 Die Architektur basiert auf folgenden Grundprinzipien:
 
@@ -215,9 +299,9 @@ Die Architektur basiert auf folgenden Grundprinzipien:
 
 ---
 
-### Betriebsunterstützende Komponenten
+### 3.3 Betriebsunterstützende Komponenten
 
-Zusätzlich zur Kernanwendung existieren unterstützende Betriebsdienste:
+Zusätzlich:
 
 - Uptime Kuma
 - phpMyAdmin
@@ -227,11 +311,11 @@ Zusätzlich zur Kernanwendung existieren unterstützende Betriebsdienste:
 
 ---
 
-## Komponentenübersicht
+## 4. Komponentenübersicht
 
-## Frontend
+### 4.1 Frontend
 
-### Technologie
+**Technologie**
 
 - React 19
 - Vite
@@ -240,26 +324,20 @@ Zusätzlich zur Kernanwendung existieren unterstützende Betriebsdienste:
 - React Hook Form
 - Vitest
 
-### Verantwortlichkeiten
-
-Das Frontend übernimmt:
+**Verantwortlichkeiten**
 
 - Benutzeroberfläche
 - Navigation / Routing
 - Formularlogik
 - clientseitige Validierung
-- Auto-Save Steuerung
+- Auto-Save
 - rollenabhängige UI-Steuerung
-
-### Deployment
-
-Das Frontend wird als statischer React Build erzeugt und über nginx innerhalb eines Docker-Containers ausgeliefert.
 
 ---
 
-## Backend
+### 4.2 Backend
 
-### Technologie
+**Technologie**
 
 - Java 21
 - Spring Boot 3
@@ -267,9 +345,7 @@ Das Frontend wird als statischer React Build erzeugt und über nginx innerhalb e
 - JdbcTemplate
 - Maven
 
-### Verantwortlichkeiten
-
-Das Backend übernimmt:
+**Verantwortlichkeiten**
 
 - REST API
 - Geschäftslogik
@@ -281,44 +357,23 @@ Das Backend übernimmt:
 
 ---
 
-## Datenbank
+### 4.3 Datenbank
 
-### Technologie
+**Technologie**
 
 - MariaDB
 
-### Verantwortlichkeiten
-
-Die Datenbank übernimmt:
-
-- operative Datenspeicherung
-- Mitgliederdaten
-- Benutzerdaten
-- Lookup-Daten
-- Datenintegrität
-- relationale Constraints
-
-DEV und PROD nutzen getrennte Datenbanken innerhalb derselben MariaDB-Instanz.
-
-Aktuell:
+DEV und PROD nutzen getrennte Datenbanken innerhalb derselben MariaDB-Instanz:
 
 - `emc_mitglieder`
 - `emc_mitglieder_dev`
 
 ---
 
-## Infrastruktur
-
-### Plattform
+### 4.4 Infrastruktur
 
 - UGREEN NAS
-
-### Containerplattform
-
 - Docker
-
-### Zusatzkomponenten
-
 - Uptime Kuma
 - phpMyAdmin
 - Portainer
@@ -326,57 +381,57 @@ Aktuell:
 
 ---
 
-## Container- und Infrastrukturarchitektur
+## 5. Container- und Infrastrukturarchitektur
 
-### Laufende EMC-Anwendungscontainer
+### 5.1 EMC-Anwendungscontainer
 
-| Container | Funktion |
-|---------|----------|
-| emc-mitglieder-frontend-dev | DEV Frontend |
-| emc-mitglieder-backend-dev | DEV Backend |
+| Container                    | Funktion      |
+| ---------------------------- | ------------- |
+| emc-mitglieder-frontend-dev  | DEV Frontend  |
+| emc-mitglieder-backend-dev   | DEV Backend   |
 | emc-mitglieder-frontend-prod | PROD Frontend |
-| emc-mitglieder-backend-prod | PROD Backend |
+| emc-mitglieder-backend-prod  | PROD Backend  |
 
 ---
 
-### Datenhaltungscontainer
+### 5.2 Datenhaltungscontainer
 
-| Container | Funktion |
-|---------|----------|
-| mariadb | zentrale Datenbank |
-| mariadb-backup | Backup-Service |
-
----
-
-### Betriebs- und Administrationscontainer
-
-| Container | Funktion |
-|---------|----------|
-| phpmyadmin | Datenbankadministration |
-| uptime-kuma | Monitoring |
-| portainer | Containerverwaltung / Deployment-Unterstützung |
+| Container      | Funktion           |
+| -------------- | ------------------ |
+| mariadb        | zentrale Datenbank |
+| mariadb-backup | Backup-Service     |
 
 ---
 
-### Exponierte Ports
+### 5.3 Betriebs- und Administrationscontainer
 
-| Dienst | Port |
-|------|------|
-| DEV Frontend | 8082 |
+| Container   | Funktion                         |
+| ----------- | -------------------------------- |
+| phpmyadmin  | Datenbankadministration          |
+| uptime-kuma | Monitoring                       |
+| portainer   | Containerverwaltung / Deployment |
+
+---
+
+### 5.4 Exponierte Ports
+
+| Dienst        | Port |
+| ------------- | ---- |
+| DEV Frontend  | 8082 |
 | PROD Frontend | 9082 |
-| phpMyAdmin | 8080 |
-| MariaDB | 3306 |
-| Uptime Kuma | 3001 |
-| Portainer | 9000 |
+| phpMyAdmin    | 8080 |
+| MariaDB       | 3306 |
+| Uptime Kuma   | 3001 |
+| Portainer     | 9000 |
 
 > [!NOTE]
 > Die Spring Boot Backends sind nicht direkt extern veröffentlicht.
 
 ---
 
-## Docker-Netzwerkarchitektur
+## 6. Docker-Netzwerkarchitektur
 
-### EMC Hauptnetzwerk
+### 6.1 EMC Hauptnetzwerk
 
 Docker Hauptnetzwerk:
 
@@ -391,9 +446,7 @@ Eigenschaften:
 
 ---
 
-### Mitglieder des EMC Netzwerks
-
-Teil des Netzwerks:
+### 6.2 Mitglieder des EMC Netzwerks
 
 - emc-mitglieder-frontend-dev
 - emc-mitglieder-backend-dev
@@ -404,20 +457,15 @@ Teil des Netzwerks:
 
 ---
 
-### Kommunikationsbeziehungen
+### 6.3 Kommunikationsbeziehungen
 
 #### DEV
 
 ```mermaid
 graph LR
-    Browser["Browser"]
-    Frontend["Frontend DEV"]
-    Backend["Backend DEV"]
-    Database["MariaDB"]
-
-    Browser --> Frontend
-    Frontend --> Backend
-    Backend --> Database
+    Browser --> Frontend["Frontend DEV"]
+    Frontend --> Backend["Backend DEV"]
+    Backend --> Database["MariaDB"]
 ```
 
 ---
@@ -426,73 +474,51 @@ graph LR
 
 ```mermaid
 graph LR
-    Browser["Browser"]
-    Frontend["Frontend PROD"]
-    Backend["Backend PROD"]
-    Database["MariaDB"]
-
-    Browser --> Frontend
-    Frontend --> Backend
-    Backend --> Database
+    Browser --> Frontend["Frontend PROD"]
+    Frontend --> Backend["Backend PROD"]
+    Backend --> Database["MariaDB"]
 ```
 
 ---
 
-### Monitoring-Kommunikation
+### Monitoring
 
 ```mermaid
 graph TD
     Uptime["Uptime Kuma"]
 
-    FrontendDev["Frontend DEV"]
-    FrontendProd["Frontend PROD"]
-    BackendDev["Backend DEV"]
-    BackendProd["Backend PROD"]
-    MariaDB["MariaDB"]
-    PhpMyAdmin["phpMyAdmin"]
-    Backup["mariadb-backup"]
-    Portainer["Portainer"]
-
-    Uptime --> FrontendDev
-    Uptime --> FrontendProd
-    Uptime --> BackendDev
-    Uptime --> BackendProd
-    Uptime --> MariaDB
-    Uptime --> PhpMyAdmin
-    Uptime --> Backup
-    Uptime --> Portainer
+    Uptime --> FrontendDEV["Frontend DEV"]
+    Uptime --> FrontendPROD["Frontend PROD"]
+    Uptime --> BackendDEV["Backend DEV"]
+    Uptime --> BackendPROD["Backend PROD"]
+    Uptime --> MariaDB["MariaDB"]
+    Uptime --> PhpMyAdmin["phpMyAdmin"]
+    Uptime --> Backup["mariadb-backup"]
+    Uptime --> Portainer["Portainer"]
 ```
 
 > [!NOTE]
-> Backend-Monitoring erfolgt bewusst über unauthentifizierte Requests, die erwartungsgemäß HTTP 401 Unauthorized zurückgeben. Dies wird als positives Lebenszeichen des gesicherten Backends gewertet.
+> Backend-Monitoring erfolgt bewusst über HTTP 401 Unauthorized als positives Lebenszeichen.
 
 ---
 
-### Weitere Docker-Netzwerke
-
-Zusätzlich vorhanden:
+### 6.4 Weitere Docker-Netzwerke
 
 #### mariadb_default
-
-Enthält:
 
 - mariadb
 - phpmyadmin
 - mariadb-backup
 
----
-
 #### uptime-kuma_default
-
-Enthält:
 
 - uptime-kuma
 
 ---
 
-## Frontend-Backend-Kommunikation
+## 7. Frontend-Backend-Kommunikation
 
-Die Frontends kommunizieren nicht direkt vom Browser zum Backend, sondern über nginx als Reverse Proxy innerhalb des jeweiligen Frontend-Containers.
+Die Frontends kommunizieren über nginx als Reverse Proxy.
 
 ### DEV
 
@@ -514,7 +540,7 @@ graph LR
 
 Technische Umsetzung:
 
-- React SPA Auslieferung über nginx
+- React SPA über nginx
 - API Routing über `/api/`
 - Weiterleitung via `proxy_pass`
 
@@ -522,5 +548,589 @@ Vorteile:
 
 - keine direkte Backend-Exponierung
 - saubere DEV/PROD Trennung
-- vereinfachte Browser-Kommunikation
-- zentrale Proxy-Steuerung
+- gleiche Origin
+- React Router SPA Support
+
+---
+
+## 8. Authentifizierungs- und Sicherheitsarchitektur
+
+Die Anwendung verwendet eine sessionbasierte Authentifizierung mit Spring Security.
+
+### 8.1 Grundprinzip
+
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant Frontend as React Frontend
+    participant Backend as Spring Security Backend
+    participant DB as MariaDB / tblUsers
+
+    Browser->>Frontend: Loginformular ausfüllen
+    Frontend->>Backend: POST /api/auth/login
+    Backend->>DB: Benutzer laden
+    Backend->>Backend: Passwort prüfen
+    Backend->>Backend: Session erzeugen
+    Backend-->>Frontend: Session + Benutzerinformationen
+    Frontend-->>Browser: Zugriff freigegeben
+```
+
+---
+
+### 8.2 Authentifizierungsendpunkte
+
+| Endpunkt | Zweck |
+|---|---|
+| `POST /api/auth/login` | Benutzer anmelden |
+| `POST /api/auth/logout` | Benutzer abmelden |
+| `GET /api/auth/me` | aktuelle Session prüfen |
+
+---
+
+### 8.3 Session-Verhalten
+
+Nach erfolgreichem Login erzeugt Spring Security serverseitig eine Session.
+
+Das Frontend kann über:
+
+```text
+/api/auth/me
+```
+
+prüfen, ob eine gültige Session besteht.
+
+Eigenschaften:
+
+- serverseitige Sessionverwaltung
+- Session Restore beim Frontend Start
+- keine Tokenverwaltung im Frontend
+
+---
+
+### 8.4 Rollenmodell
+
+Die Anwendung verwendet drei Rollen.
+
+| Rolle | Rechte |
+|---|---|
+| `ADMIN` | vollständige Mitgliederverwaltung + Benutzerverwaltung |
+| `EDITOR` | Mitglieder lesen und bearbeiten |
+| `VIEWER` | Mitglieder nur lesen |
+
+Die Rollen werden direkt in:
+
+```text
+tblUsers
+```
+
+gespeichert.
+
+Es existiert aktuell keine separate Rollen- oder Mapping-Tabelle.
+
+---
+
+### 8.5 Backend-Autorisierung
+
+Die verbindliche Autorisierung erfolgt im Backend.
+
+| Bereich | Zugriff |
+|---|---|
+| `/api/auth/login` | öffentlich |
+| `/api/auth/me` | angemeldete Benutzer |
+| `/api/auth/logout` | angemeldete Benutzer |
+| `/api/admin/**` | nur `ADMIN` |
+| `GET /api/lookups/**` | `ADMIN`, `EDITOR`, `VIEWER` |
+| `GET /api/members/**` | `ADMIN`, `EDITOR`, `VIEWER` |
+| `POST /api/members` | `ADMIN`, `EDITOR` |
+| `PUT /api/members/**` | `ADMIN`, `EDITOR` |
+| `DELETE /api/members/**` | nur `ADMIN` |
+
+---
+
+### 8.6 Frontend-Autorisierung
+
+Das Frontend blendet Funktionen rollenabhängig ein oder aus.
+
+Beispiele:
+
+- Benutzerverwaltung nur für `ADMIN`
+- Bearbeitungsfunktionen nur für `ADMIN` und `EDITOR`
+- reine Lesefunktion für `VIEWER`
+
+> [!NOTE]
+> Die Frontend-Autorisierung dient der Benutzerführung. Sicherheitsrelevant ist ausschließlich die Backend-Prüfung.
+
+---
+
+### 8.7 Passwortsicherheit
+
+Passwörter werden nicht im Klartext gespeichert.
+
+Das Backend verwendet:
+
+```text
+BCryptPasswordEncoder
+```
+
+---
+
+### 8.8 CSRF
+
+CSRF-Schutz ist aktuell deaktiviert.
+
+Implementierung:
+
+```java
+csrf(csrf -> csrf.disable())
+```
+
+Diese Entscheidung wurde im aktuellen Pilotbetrieb bewusst pragmatisch getroffen.
+
+> [!WARNING]
+> Bei künftigem echtem Internetbetrieb (Domain / DynDNS / Reverse Proxy) sollte die CSRF-Strategie erneut bewertet werden.
+
+---
+
+### 8.9 Login-Sicherheit
+
+Login-Fehlermeldungen sind bewusst neutral gehalten.
+
+Ziel:
+
+- keine Preisgabe sicherheitsrelevanter Details
+- keine Information, ob Benutzername oder Passwort falsch war
+
+---
+
+## 9. API-Architektur
+
+Das Backend stellt eine REST-API unterhalb von:
+
+```text
+/api
+```
+
+bereit.
+
+---
+
+### 9.1 Auth API
+
+| Methode | Endpunkt | Zweck |
+|---|---|---|
+| `POST` | `/api/auth/login` | Anmeldung |
+| `POST` | `/api/auth/logout` | Abmeldung |
+| `GET` | `/api/auth/me` | Session prüfen |
+
+---
+
+### 9.2 Mitglieder API
+
+| Methode | Endpunkt | Zweck |
+|---|---|---|
+| `GET` | `/api/members` | Mitgliederliste |
+| `GET` | `/api/members/{mitgliedsnummer}` | Mitglied Detail |
+| `POST` | `/api/members` | Mitglied anlegen |
+| `PUT` | `/api/members/{mitgliedsnummer}/stammdaten` | Stammdaten ändern |
+| `PUT` | `/api/members/{mitgliedsnummer}/kontakt` | Kontaktdaten ändern |
+| `PUT` | `/api/members/{mitgliedsnummer}/mitgliedschaft` | Mitgliedschaft ändern |
+| `GET` | `/api/members/{mitgliedsnummer}/datenschutz` | Datenschutz lesen |
+| `PUT` | `/api/members/{mitgliedsnummer}/datenschutz` | Datenschutz ändern |
+| `GET` | `/api/members/{mitgliedsnummer}/chorkleidung` | Chorkleidung lesen |
+| `PUT` | `/api/members/{mitgliedsnummer}/chorkleidung` | Chorkleidung ändern |
+
+---
+
+### 9.3 Lookup API
+
+| Methode | Endpunkt | Zweck |
+|---|---|---|
+| `GET` | `/api/lookups/member-status` | Mitgliederstatus |
+| `GET` | `/api/lookups/voices` | Stimmen |
+
+---
+
+### 9.4 Admin API
+
+| Methode | Endpunkt | Zweck |
+|---|---|---|
+| `GET` | `/api/admin/users` | Benutzerliste |
+| `POST` | `/api/admin/users` | Benutzer anlegen |
+| `PUT` | `/api/admin/users/{id}/role` | Rolle ändern |
+| `PUT` | `/api/admin/users/{id}/active` | aktiv/inaktiv |
+| `PUT` | `/api/admin/users/{id}/password` | Passwort setzen |
+
+---
+
+## 10. Frontend-Architektur
+
+Das Frontend ist eine React Single Page Application.
+
+### 10.1 Technische Bausteine
+
+| Technologie | Zweck |
+|---|---|
+| React | UI |
+| Vite | Build |
+| React Router | Navigation |
+| React Query | Server State |
+| React Hook Form | Formulare |
+| Vitest | Unit Tests |
+
+---
+
+### 10.2 Verantwortlichkeiten
+
+Das Frontend übernimmt:
+
+- Benutzeroberfläche
+- Routing
+- Session Restore
+- Formularsteuerung
+- Validierung
+- Auto-Save
+- Rollenabhängige UI
+
+---
+
+### 10.3 Auto-Save
+
+Formularbereiche speichern Änderungen automatisch.
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant Backend
+    participant DB
+
+    User->>Frontend: Feld ändern
+    Frontend->>Frontend: Validierung
+    Frontend->>Backend: PUT Request
+    Backend->>DB: speichern
+    DB-->>Backend: Erfolg
+    Backend-->>Frontend: Response
+    Frontend-->>User: gespeichert
+```
+
+---
+
+## 11. Backend-Architektur
+
+Das Backend folgt einer klassischen Schichtenarchitektur.
+
+### 11.1 Schichtenmodell
+
+```mermaid
+graph TD
+    Controller["Controller"]
+    Service["Service"]
+    Repository["Repository"]
+    JdbcTemplate["JdbcTemplate"]
+    Database["MariaDB"]
+
+    Controller --> Service
+    Service --> Repository
+    Repository --> JdbcTemplate
+    JdbcTemplate --> Database
+```
+
+---
+
+### 11.2 Verantwortlichkeiten
+
+| Schicht | Aufgabe |
+|---|---|
+| Controller | REST-Endpunkte |
+| Service | Geschäftslogik |
+| Repository | SQL Zugriff |
+| Mapper | DTO Mapping |
+| DTOs | API Modelle |
+| Exception Handling | zentrale Fehlerbehandlung |
+
+---
+
+### 11.3 Transaktionen
+
+Mitgliedsanlage erfolgt transaktional.
+
+Betroffene Tabellen:
+
+- `tblMitglieder`
+- `tblKontaktdaten`
+- `tblMitgliedschaft`
+- `tblDatenschutz`
+- `tblChorkleidung`
+
+---
+
+### 11.4 Fehlerbehandlung
+
+Zentrale Fehlerbehandlung über:
+
+```text
+GlobalExceptionHandler
+```
+
+Behandelt:
+
+- Validierungsfehler
+- fachliche Fehler
+- Datenbankfehler
+- Konflikte
+- Authentifizierungsfehler
+- unerwartete Serverfehler
+
+---
+
+### 11.5 Request-ID Logging
+
+Das Backend nutzt:
+
+```text
+X-Request-Id
+```
+
+Ziel:
+
+- Fehlerkorrelation
+- Nachvollziehbarkeit
+- Betriebsanalyse
+
+---
+
+## 12. Datenbankarchitektur
+
+MariaDB bildet die zentrale Datenhaltung.
+
+---
+
+### 12.1 Umgebungen
+
+| Umgebung | Datenbank |
+|---|---|
+| DEV | `emc_mitglieder_dev` |
+| PROD | `emc_mitglieder` |
+
+---
+
+### 12.2 Fachtabellen
+
+- `tblMitglieder`
+- `tblKontaktdaten`
+- `tblMitgliedschaft`
+- `tblDatenschutz`
+- `tblChorkleidung`
+- `tblUsers`
+
+---
+
+### 12.3 Lookup Tabellen
+
+- `tblMitgliederstatus_FT`
+- `tblStimme_FT`
+
+Perspektivisch:
+
+- Ehrungen
+- Funktionen
+- Verteiler
+
+---
+
+### 12.4 Benutzerverwaltung
+
+Benutzer liegen in:
+
+```text
+tblUsers
+```
+
+Relevante Informationen:
+
+- Benutzername
+- Passwort Hash
+- Rolle
+- aktiv/inaktiv
+- letzte Anmeldung
+
+---
+
+## 13. Monitoring
+
+Monitoring erfolgt über:
+
+```text
+Uptime Kuma
+```
+
+---
+
+### 13.1 Überwachte Komponenten
+
+- Frontend DEV
+- Frontend PROD
+- Backend DEV
+- Backend PROD
+- MariaDB
+- phpMyAdmin
+- Portainer
+- mariadb-backup
+
+---
+
+### 13.2 Backend Monitoring
+
+Backend liefert bewusst:
+
+```text
+HTTP 401 Unauthorized
+```
+
+als positives Lebenszeichen.
+
+> [!NOTE]
+> Das bedeutet nicht „Fehler“, sondern „Security aktiv“.
+
+---
+
+### 13.3 Benachrichtigung
+
+Benachrichtigungen erfolgen via Telegram.
+
+---
+
+## 14. Testing
+
+### Frontend
+
+Vitest Unit Tests vorhanden.
+
+Aktuell abgedeckt:
+
+- validationHelpers
+- dateHelpers
+- stammdatenValidator
+- membershipValidator
+- contactValidator
+- datenschutzValidator
+- chorkleidungValidator
+
+Stand:
+
+```text
+64 erfolgreiche Unit Tests
+```
+
+---
+
+### Backend
+
+Automatisierte Tests vorhanden.
+
+Abgedeckte Bereiche:
+
+- Auth
+- Admin User
+- Member Controller
+- Member Service
+- Mapper
+- Security
+- Context
+
+Stand:
+
+```text
+35 erfolgreiche Tests
+```
+
+---
+
+## 15. Architekturentscheidungen
+
+### 15.1 Spring Boot statt Node.js
+
+Frühe Konzepte sahen Node.js vor.
+
+Final entschieden:
+
+```text
+Spring Boot 3
+```
+
+Gründe:
+
+- Spring Security
+- robuste Architektur
+- Validierung
+- Testbarkeit
+
+---
+
+### 15.2 Session statt JWT
+
+Gründe:
+
+- einfachere Integration
+- keine Tokenverwaltung
+- Session Restore
+- klassische Web-Anwendung
+
+---
+
+### 15.3 JdbcTemplate statt JPA
+
+Gründe:
+
+- volle SQL Kontrolle
+- bestehende DB passt gut
+- weniger ORM Komplexität
+
+---
+
+### 15.4 nginx Reverse Proxy
+
+Gründe:
+
+- Backend nicht direkt exponieren
+- gleiche Origin
+- saubere DEV/PROD Trennung
+- SPA Support
+
+---
+
+### 15.5 Docker auf NAS
+
+Gründe:
+
+- reproduzierbar
+- modular
+- gut administrierbar
+- Monitoring integrierbar
+
+---
+
+### 15.6 MariaDB Port 3306 bewusst offen
+
+Grund:
+
+- Access / ODBC Altwelt
+
+> [!WARNING]
+> Nicht ins öffentliche Internet exponieren.
+
+---
+
+## 16. Geplante Architektur-Erweiterungen
+
+Perspektivisch:
+
+- Domain / DynDNS Zugriff
+- Reverse Proxy / TLS
+- Security Härtung
+- Ehrungen
+- Funktionen
+- Verteiler
+- vollständige Access Ablösung
+- mehr Integrationstests
+- erweitertes Backup / Restore
