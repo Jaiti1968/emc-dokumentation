@@ -64,9 +64,22 @@
     - [9.3 Lookup API](#93-lookup-api)
     - [9.4 Admin API](#94-admin-api)
   - [10. Frontend-Architektur](#10-frontend-architektur)
-    - [10.1 Technische Bausteine](#101-technische-bausteine)
-    - [10.2 Verantwortlichkeiten](#102-verantwortlichkeiten)
-    - [10.3 Auto-Save](#103-auto-save)
+    - [10.1 Technologiestack](#101-technologiestack)
+    - [10.2 Frontend-Schichtenmodell](#102-frontend-schichtenmodell)
+    - [10.3 Auth Layer](#103-auth-layer)
+    - [10.4 API Layer](#104-api-layer)
+    - [10.5 Routing Layer](#105-routing-layer)
+    - [10.6 Page Layer](#106-page-layer)
+    - [10.7 Component Layer](#107-component-layer)
+    - [10.8 Hook Layer](#108-hook-layer)
+    - [10.9 Utility Layer](#109-utility-layer)
+    - [10.10 Formulararchitektur](#1010-formulararchitektur)
+    - [10.11 Auto-Save Architektur](#1011-auto-save-architektur)
+    - [10.12 Session Restore](#1012-session-restore)
+    - [10.13 Session-Verlust Handling](#1013-session-verlust-handling)
+    - [10.14 Backend Error Mapping](#1014-backend-error-mapping)
+    - [10.15 Rollenabhängige UI](#1015-rollenabhängige-ui)
+    - [10.16 Frontend Testing](#1016-frontend-testing)
   - [11. Backend-Architektur](#11-backend-architektur)
     - [11.1 Schichtenmodell](#111-schichtenmodell)
     - [11.2 Verantwortlichkeiten](#112-verantwortlichkeiten)
@@ -855,54 +868,366 @@ bereit.
 
 ## 10. Frontend-Architektur
 
-Das Frontend ist eine React Single Page Application.
+Das Frontend ist als moderne React Single Page Application (SPA) umgesetzt.
 
-### 10.1 Technische Bausteine
+Die Anwendung wird als statischer Build erzeugt und über nginx innerhalb eines Docker-Containers ausgeliefert.
+
+Die Kommunikation mit dem Backend erfolgt ausschließlich über die REST API.
+
+---
+
+### 10.1 Technologiestack
 
 | Technologie | Zweck |
 |---|---|
-| React | UI |
-| Vite | Build |
-| React Router | Navigation |
-| React Query | Server State |
-| React Hook Form | Formulare |
-| Vitest | Unit Tests |
+| React 19 | Benutzeroberfläche |
+| Vite | Build und Entwicklungsumgebung |
+| React Router | Clientseitiges Routing |
+| React Query | Server State Management |
+| React Hook Form | Formularverwaltung |
+| Vitest | Frontend Unit Tests |
+| nginx | Auslieferung / Reverse Proxy |
 
 ---
 
-### 10.2 Verantwortlichkeiten
+### 10.2 Frontend-Schichtenmodell
 
-Das Frontend übernimmt:
+Das Frontend folgt einer modularen Architektur mit klarer Verantwortlichkeitstrennung.
 
-- Benutzeroberfläche
-- Routing
-- Session Restore
-- Formularsteuerung
-- Validierung
+Schichten:
+
+- Auth Layer
+- API Layer
+- Routing Layer
+- Page Layer
+- Component Layer
+- Hook Layer
+- Utility Layer
+
+Architekturübersicht:
+
+```mermaid
+graph TD
+    Routes["Routing Layer"]
+    Pages["Page Layer"]
+    Components["Component Layer"]
+    Hooks["Hook Layer"]
+    API["API Layer"]
+    Backend["Backend API"]
+
+    Routes --> Pages
+    Pages --> Components
+    Components --> Hooks
+    Hooks --> API
+    API --> Backend
+```
+
+Diese Struktur verbessert:
+
+- Wartbarkeit
+- Wiederverwendbarkeit
+- Testbarkeit
+- klare Verantwortlichkeiten
+
+---
+
+### 10.3 Auth Layer
+
+Die Authentifizierungslogik ist zentral gekapselt.
+
+Verantwortlichkeiten:
+
+- Session Restore beim App-Start
+- aktueller Benutzerkontext
+- Login
+- Logout
+- Rolleninformationen
+- Auth Status Verwaltung
+
+Die Authentifizierungsinformationen werden über einen zentralen React Context bereitgestellt.
+
+Vorteile:
+
+- zentrale Auth-Verwaltung
+- keine verteilte Sessionlogik
+- einfache Nutzung in Komponenten
+- konsistente Sicherheitssteuerung
+
+---
+
+### 10.4 API Layer
+
+Die Kommunikation mit dem Backend ist zentral abstrahiert.
+
+Verantwortlichkeiten:
+
+- API Requests
+- Fehlerbehandlung
+- Session-Kommunikation
+- Authentifizierungsverhalten
+
+Die Sessionkommunikation erfolgt explizit mit:
+
+```javascript
+credentials: "include"
+```
+
+Dadurch werden Session-Cookies korrekt an das Backend übertragen.
+
+Vorteile:
+
+- zentrale API Logik
+- konsistente Fehlerbehandlung
+- reduzierte Code-Duplizierung
+- klare Backend-Kommunikation
+
+---
+
+### 10.5 Routing Layer
+
+Die Navigation erfolgt über React Router.
+
+Verantwortlichkeiten:
+
+- Seitenrouting
+- geschützte Routen
+- Login Routing
+- Detailnavigation
+
+Geschützte Bereiche werden zentral abgesichert.
+
+Nicht authentifizierte Benutzer erhalten keinen Zugriff auf geschützte Bereiche.
+
+---
+
+### 10.6 Page Layer
+
+Pages repräsentieren fachliche Anwendungsseiten.
+
+Typische Verantwortlichkeiten:
+
+- Seitenstruktur
+- Layout
+- Datenzusammenführung
+- Navigation
+- Seitenlogik
+
+Beispiele:
+
+- Login
+- Mitgliederliste
+- Mitglied Detailansicht
+- Benutzerverwaltung
+
+---
+
+### 10.7 Component Layer
+
+Komponenten kapseln wiederverwendbare UI-Bausteine.
+
+Beispiele:
+
+- Formulare
+- Formularfelder
+- Dialoge
+- Tabellen
+- Statusanzeigen
+- Fehlermeldungen
+
+Ziel:
+
+- Wiederverwendbarkeit
+- konsistente UI
+- reduzierte Redundanz
+
+---
+
+### 10.8 Hook Layer
+
+Hooks kapseln wiederverwendbare Frontend-Logik.
+
+Beispiele:
+
 - Auto-Save
-- Rollenabhängige UI
+- Auth Status
+- Form State
+- API Interaktionen
+
+Dies reduziert Logikduplikation innerhalb von Komponenten.
 
 ---
 
-### 10.3 Auto-Save
+### 10.9 Utility Layer
 
-Formularbereiche speichern Änderungen automatisch.
+Utilities enthalten fachliche und technische Hilfsfunktionen.
+
+Beispiele:
+
+- Validatoren
+- Datumslogik
+- Payload Mapping
+- Default Value Erstellung
+- Backend Error Mapping
+
+Diese Trennung verbessert Testbarkeit und Wartbarkeit.
+
+---
+
+### 10.10 Formulararchitektur
+
+Die Formulare basieren auf:
+
+```text
+React Hook Form
+```
+
+Verantwortlichkeiten:
+
+- Formularstatus
+- Validierung
+- Fehlerzustände
+- Dirty Tracking
+- Field State Management
+
+Vorteile:
+
+- performante Formulare
+- saubere Validierung
+- klare State Verwaltung
+- gute Testbarkeit
+
+---
+
+### 10.11 Auto-Save Architektur
+
+Die Formularspeicherung erfolgt automatisch über einen generischen Hook-basierten Mechanismus.
+
+Die Implementierung ist nicht formularspezifisch, sondern wiederverwendbar.
+
+Prinzip:
 
 ```mermaid
 sequenceDiagram
     participant User
-    participant Frontend
+    participant Form
+    participant AutoSaveHook
+    participant API
     participant Backend
     participant DB
 
-    User->>Frontend: Feld ändern
-    Frontend->>Frontend: Validierung
-    Frontend->>Backend: PUT Request
+    User->>Form: Feld ändern
+    Form->>Form: Validierung
+    Form->>AutoSaveHook: Änderungszustand
+    AutoSaveHook->>API: API Request
+    API->>Backend: PUT Request
     Backend->>DB: speichern
     DB-->>Backend: Erfolg
-    Backend-->>Frontend: Response
-    Frontend-->>User: gespeichert
+    Backend-->>API: Response
+    API-->>AutoSaveHook: Erfolg
+    AutoSaveHook-->>User: gespeichert
 ```
+
+Vorteile:
+
+- wiederverwendbar
+- konsistentes Verhalten
+- reduzierte Formularkomplexität
+- zentrale Wartung
+
+---
+
+### 10.12 Session Restore
+
+Beim Start prüft das Frontend automatisch:
+
+```text
+/api/auth/me
+```
+
+um eine bestehende Session wiederherzustellen.
+
+Dies ermöglicht:
+
+- persistente Login-Sessions
+- bessere Benutzererfahrung
+- kontrollierte App-Initialisierung
+
+---
+
+### 10.13 Session-Verlust Handling
+
+Antwortet das Backend mit:
+
+```text
+HTTP 401 Unauthorized
+```
+
+wird dies zentral behandelt.
+
+Das Frontend:
+
+- erkennt ungültige Session
+- verwirft den Auth Status
+- leitet auf Login um
+
+Dies verhindert inkonsistente Auth-Zustände.
+
+---
+
+### 10.14 Backend Error Mapping
+
+Backend-Validierungsfehler werden strukturiert ins Frontend zurückgeführt.
+
+Dies ermöglicht:
+
+- feldgenaue Fehlermeldungen
+- konsistente Formularfehler
+- saubere Benutzerführung
+
+Statt generischer Fehlermeldungen können konkrete Formularfelder markiert werden.
+
+---
+
+### 10.15 Rollenabhängige UI
+
+Das Frontend steuert die sichtbare Oberfläche rollenabhängig.
+
+Beispiele:
+
+- ADMIN Funktionen sichtbar
+- EDITOR Bearbeitung erlaubt
+- VIEWER nur Lesefunktion
+
+> [!NOTE]
+> Diese Steuerung dient der Benutzerführung. Sicherheitsrelevant bleibt ausschließlich die Backend-Autorisierung.
+
+---
+
+### 10.16 Frontend Testing
+
+Das Frontend enthält automatisierte Unit Tests.
+
+Aktuell abgedeckte Bereiche:
+
+- validationHelpers
+- dateHelpers
+- stammdatenValidator
+- membershipValidator
+- contactValidator
+- datenschutzValidator
+- chorkleidungValidator
+
+Stand:
+
+```text
+64 erfolgreiche Unit Tests
+```
+
+Ziel:
+
+- Qualitätssicherung der Formularlogik
+- Validierungsabsicherung
+- Regressionserkennung
 
 ---
 
