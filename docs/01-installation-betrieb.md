@@ -49,6 +49,32 @@
     - [7.8 Frontend bereitstellen](#78-frontend-bereitstellen)
     - [7.9 Monitoring bereitstellen](#79-monitoring-bereitstellen)
     - [7.10 Erstprüfung](#710-erstprüfung)
+  - [8. Betriebsprozesse](#8-betriebsprozesse)
+    - [8.1 Statusprüfung](#81-statusprüfung)
+    - [8.2 Start von Diensten](#82-start-von-diensten)
+    - [8.3 Stop von Diensten](#83-stop-von-diensten)
+    - [8.4 Neustart](#84-neustart)
+    - [8.5 Logprüfung](#85-logprüfung)
+    - [8.6 Betriebsprüfung Frontend](#86-betriebsprüfung-frontend)
+    - [8.7 Betriebsprüfung Backend](#87-betriebsprüfung-backend)
+    - [8.8 Datenbankbetrieb](#88-datenbankbetrieb)
+    - [8.9 Portainer Betrieb](#89-portainer-betrieb)
+  - [9. Monitoring und Überwachung](#9-monitoring-und-überwachung)
+    - [9.1 Überwachte Systeme](#91-überwachte-systeme)
+    - [9.2 Frontend Monitoring](#92-frontend-monitoring)
+    - [9.3 Backend Monitoring](#93-backend-monitoring)
+    - [9.4 Infrastruktur Monitoring](#94-infrastruktur-monitoring)
+    - [9.5 Benachrichtigungen](#95-benachrichtigungen)
+    - [9.6 Monitoring Routine](#96-monitoring-routine)
+  - [10. Backup-Konzept](#10-backup-konzept)
+    - [10.1 Backup Strategie](#101-backup-strategie)
+    - [10.2 Gesicherte Datenbanken](#102-gesicherte-datenbanken)
+    - [10.3 Speicherort](#103-speicherort)
+    - [10.4 Backup Rotation](#104-backup-rotation)
+    - [10.5 Initialbackup](#105-initialbackup)
+    - [10.6 Operative Backup Prüfung](#106-operative-backup-prüfung)
+    - [10.7 Verantwortlichkeit](#107-verantwortlichkeit)
+    - [10.8 Restore](#108-restore)
 
 ---
 
@@ -752,6 +778,502 @@ Nach Installation prüfen:
 
 > [!NOTE]
 > Release Smoke Tests werden im Deployment-Handbuch detailliert beschrieben.
+
+---
+
+## 8. Betriebsprozesse
+
+Dieses Kapitel beschreibt typische operative Betriebsabläufe.
+
+Die primäre Verwaltungsoberfläche ist:
+
+```text
+Portainer
+```
+
+Docker CLI dient ergänzend für Diagnose und Recovery.
+
+---
+
+### 8.1 Statusprüfung
+
+Regelmäßige Statuskontrolle umfasst:
+
+- Containerstatus
+- Erreichbarkeit der Webanwendung
+- Monitoring Status
+- Backup Status
+
+Portainer:
+
+- Stack Status
+- Container Status
+- Neustarts
+- Logs
+
+Docker CLI:
+
+```bash
+docker ps
+```
+
+Zweck:
+
+- laufende Container prüfen
+- Portfreigaben prüfen
+- Neustarts erkennen
+
+---
+
+### 8.2 Start von Diensten
+
+Im Regelbetrieb starten Container automatisch.
+
+Konfiguration:
+
+```text
+restart: unless-stopped
+```
+
+Manueller Start:
+
+Portainer:
+
+- Stack starten
+- Container starten
+
+Docker CLI:
+
+```bash
+docker start <container>
+```
+
+oder:
+
+```bash
+docker compose up -d
+```
+
+---
+
+### 8.3 Stop von Diensten
+
+Geplanter Stop:
+
+Portainer:
+
+- Stack stoppen
+- Container stoppen
+
+Docker CLI:
+
+```bash
+docker stop <container>
+```
+
+oder:
+
+```bash
+docker compose down
+```
+
+---
+
+### 8.4 Neustart
+
+Typische Anwendungsfälle:
+
+- Konfigurationsänderungen
+- Deployment
+- Recovery
+- Netzwerkprobleme
+- Containerfehler
+
+Portainer:
+
+- Restart Container
+- Redeploy Stack
+
+Docker CLI:
+
+```bash
+docker restart <container>
+```
+
+---
+
+### 8.5 Logprüfung
+
+Logs sind zentrale Diagnosequelle.
+
+Portainer:
+
+integrierte Logansicht
+
+Docker CLI:
+
+```bash
+docker logs <container>
+```
+
+Live Log:
+
+```bash
+docker logs -f <container>
+```
+
+Typische Kandidaten:
+
+- emc-mitglieder-backend-dev
+- emc-mitglieder-backend-prod
+- emc-mitglieder-frontend-dev
+- emc-mitglieder-frontend-prod
+- mariadb
+- mariadb-backup
+- uptime-kuma
+
+---
+
+### 8.6 Betriebsprüfung Frontend
+
+Prüfen:
+
+- Frontend erreichbar
+- Loginseite lädt
+- Navigation funktioniert
+- Sessionverhalten korrekt
+
+Aktuelle Zugriffe:
+
+DEV:
+
+```text
+http://<NAS-IP>:8082
+```
+
+PROD:
+
+```text
+http://<NAS-IP>:9082
+```
+
+---
+
+### 8.7 Betriebsprüfung Backend
+
+Backend ist nicht direkt extern veröffentlicht.
+
+Prüfung erfolgt indirekt:
+
+- Frontend Funktion
+- Uptime Kuma
+- Backend Logs
+
+Bewusst erwartetes Verhalten:
+
+```text
+HTTP 401 Unauthorized
+```
+
+ohne Authentifizierung.
+
+---
+
+### 8.8 Datenbankbetrieb
+
+Regelmäßig prüfen:
+
+- MariaDB Container läuft
+- Portfreigabe vorhanden
+- DB Verbindungen stabil
+- keine Fehlereinträge
+
+Port:
+
+```text
+3306
+```
+
+---
+
+### 8.9 Portainer Betrieb
+
+Portainer dient als zentrale Betriebsoberfläche.
+
+Funktionen:
+
+- Stack Verwaltung
+- Container Status
+- Logs
+- Neustarts
+- Redeployments
+
+Aktueller Zugriff:
+
+```text
+http://<NAS-IP>:9000
+```
+
+---
+
+## 9. Monitoring und Überwachung
+
+Monitoring erfolgt über:
+
+```text
+Uptime Kuma
+```
+
+---
+
+### 9.1 Überwachte Systeme
+
+Aktuell überwacht:
+
+- Frontend DEV
+- Frontend PROD
+- Backend DEV
+- Backend PROD
+- MariaDB
+- phpMyAdmin
+- Portainer
+- mariadb-backup
+
+---
+
+### 9.2 Frontend Monitoring
+
+Frontend Checks prüfen:
+
+- HTTP Erreichbarkeit
+- nginx Funktion
+- Webanwendung erreichbar
+
+Erwartung:
+
+```text
+HTTP 200
+```
+
+---
+
+### 9.3 Backend Monitoring
+
+Backend Monitoring erfolgt bewusst über geschützte Endpunkte.
+
+Erwartetes Ergebnis:
+
+```text
+HTTP 401 Unauthorized
+```
+
+Dies gilt als erfolgreiches Monitoring-Ergebnis.
+
+Interpretation:
+
+- Backend erreichbar
+- Spring Security aktiv
+- API reagiert erwartungsgemäß
+
+> [!NOTE]
+> HTTP 401 ist hier kein Fehlerzustand.
+
+---
+
+### 9.4 Infrastruktur Monitoring
+
+Überwachung:
+
+- MariaDB
+- phpMyAdmin
+- Portainer
+- Backup Container
+
+Ziele:
+
+- Erreichbarkeit
+- Dienststatus
+- Ausfälle erkennen
+
+---
+
+### 9.5 Benachrichtigungen
+
+Benachrichtigung erfolgt via:
+
+```text
+Telegram
+```
+
+Zweck:
+
+- schnelle Ausfallinformation
+- Betriebsüberwachung
+- Alarmierung
+
+---
+
+### 9.6 Monitoring Routine
+
+Empfohlene regelmäßige Prüfung:
+
+- Uptime Kuma Dashboard
+- Fehlgeschlagene Checks
+- Neustarts
+- Telegram Alerts
+- Erreichbarkeit Frontend
+
+---
+
+## 10. Backup-Konzept
+
+Die Anwendung verwendet automatisierte Datenbank-Backups.
+
+Technologie:
+
+```text
+fradelg/mysql-cron-backup
+```
+
+Container:
+
+```text
+mariadb-backup
+```
+
+---
+
+### 10.1 Backup Strategie
+
+Backup-Modell:
+
+- automatisiert
+- dateibasiert
+- containerisiert
+- komprimiert
+- rotationsbasiert
+
+Aktuelle Parameter:
+
+| Parameter | Wert |
+|---------|------|
+| Zeitplan | täglich 03:00 |
+| Initialbackup | aktiviert |
+| Retention | 14 Backups |
+| Kompression | gzip Level 6 |
+
+---
+
+### 10.2 Gesicherte Datenbanken
+
+Aktuell enthalten:
+
+- emc_mitglieder
+- emc_mitglieder_dev
+- emc_finanzen
+- emc_finanzen_dev
+
+> [!NOTE]
+> Das Backup-Konzept umfasst aktuell mehrere EMC-bezogene Anwendungen, nicht ausschließlich die Mitgliederverwaltung.
+
+---
+
+### 10.3 Speicherort
+
+Aktueller Backup Speicher:
+
+```text
+/volume1/home/JaitiNissi1968/docker/backups/mariadb
+```
+
+Anforderungen:
+
+- persistenter Speicher
+- ausreichender freier Platz
+- NAS-seitige Datensicherheit
+
+---
+
+### 10.4 Backup Rotation
+
+Retention:
+
+```text
+14 Backups
+```
+
+Bedeutung:
+
+- ältere Backups werden automatisch entfernt
+- begrenzter Speicherverbrauch
+- definierte Aufbewahrung
+
+---
+
+### 10.5 Initialbackup
+
+Beim Start des Backup Containers:
+
+```text
+INIT_BACKUP=1
+```
+
+Bedeutung:
+
+Sofortiger Initialdump beim Containerstart.
+
+Vorteil:
+
+Backup-Sicherheit direkt nach Deployment oder Neustart.
+
+---
+
+### 10.6 Operative Backup Prüfung
+
+Regelmäßig prüfen:
+
+- Backupdateien vorhanden
+- aktuelles Datum vorhanden
+- Dateigröße plausibel
+- Rotation funktioniert
+- Backup Container läuft
+
+Prüfung via:
+
+Portainer:
+
+- Container Status
+- Logs
+
+Docker CLI:
+
+```bash
+docker logs mariadb-backup
+```
+
+NAS Dateisystem:
+
+Backup Verzeichnis prüfen
+
+---
+
+### 10.7 Verantwortlichkeit
+
+Der technische Betreiber ist verantwortlich für:
+
+- Backup Funktionsprüfung
+- Speicherplatzkontrolle
+- Rotation Kontrolle
+- Backup Integrität
+
+---
+
+### 10.8 Restore
+
+Restore-Prozesse werden detailliert im Troubleshooting-/Recovery-Handbuch beschrieben.
+
+> [!WARNING]
+> Ein Backup ohne getesteten Restore ist kein vollständiges Betriebskonzept.
 
 ---
 
