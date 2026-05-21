@@ -48,12 +48,16 @@
     - [8.1 Grundprinzip](#81-grundprinzip)
     - [8.2 Authentifizierungsendpunkte](#82-authentifizierungsendpunkte)
     - [8.3 Session-Verhalten](#83-session-verhalten)
-    - [8.4 Rollenmodell](#84-rollenmodell)
-    - [8.5 Backend-Autorisierung](#85-backend-autorisierung)
-    - [8.6 Frontend-Autorisierung](#86-frontend-autorisierung)
-    - [8.7 Passwortsicherheit](#87-passwortsicherheit)
-    - [8.8 CSRF](#88-csrf)
-    - [8.9 Login-Sicherheit](#89-login-sicherheit)
+    - [8.4 Frontend Session-Kommunikation](#84-frontend-session-kommunikation)
+    - [8.5 Rollenmodell](#85-rollenmodell)
+    - [8.6 Backend-Autorisierung](#86-backend-autorisierung)
+    - [8.7 Frontend-Autorisierung](#87-frontend-autorisierung)
+    - [8.8 Protected Routing](#88-protected-routing)
+    - [8.9 Session-Verlust Handling](#89-session-verlust-handling)
+    - [8.10 Passwortsicherheit](#810-passwortsicherheit)
+    - [8.11 CSRF](#811-csrf)
+    - [8.12 Login-Sicherheit](#812-login-sicherheit)
+    - [8.13 Sicherheitsprinzipien](#813-sicherheitsprinzipien)
   - [9. API-Architektur](#9-api-architektur)
     - [9.1 Auth API](#91-auth-api)
     - [9.2 Mitglieder API](#92-mitglieder-api)
@@ -557,6 +561,10 @@ Vorteile:
 
 Die Anwendung verwendet eine sessionbasierte Authentifizierung mit Spring Security.
 
+Das Sicherheitsmodell basiert auf serverseitiger Sessionverwaltung mit rollenbasierter Autorisierung.
+
+---
+
 ### 8.1 Grundprinzip
 
 ```mermaid
@@ -575,6 +583,10 @@ sequenceDiagram
     Frontend-->>Browser: Zugriff freigegeben
 ```
 
+Die Authentifizierung erfolgt vollständig serverseitig.
+
+Das Frontend verwaltet keine Tokens.
+
 ---
 
 ### 8.2 Authentifizierungsendpunkte
@@ -591,23 +603,44 @@ sequenceDiagram
 
 Nach erfolgreichem Login erzeugt Spring Security serverseitig eine Session.
 
-Das Frontend kann über:
+Die Session wird über Browser-Cookies weitergeführt.
+
+Beim Start der Anwendung prüft das Frontend automatisch über:
 
 ```text
 /api/auth/me
 ```
 
-prüfen, ob eine gültige Session besteht.
+ob bereits eine gültige Session existiert.
+
+Dies ermöglicht Session Restore ohne erneute Anmeldung.
 
 Eigenschaften:
 
 - serverseitige Sessionverwaltung
 - Session Restore beim Frontend Start
 - keine Tokenverwaltung im Frontend
+- Spring Security Session Handling
 
 ---
 
-### 8.4 Rollenmodell
+### 8.4 Frontend Session-Kommunikation
+
+Das Frontend sendet API Requests explizit mit:
+
+```javascript
+credentials: "include"
+```
+
+Dadurch werden Browser-Cookies einschließlich Session-Cookies an das Backend übermittelt.
+
+Dies ist Voraussetzung für die sessionbasierte Authentifizierung mit Spring Security.
+
+Ohne diese Konfiguration würde die Session nicht korrekt zwischen Browser und Backend übertragen.
+
+---
+
+### 8.5 Rollenmodell
 
 Die Anwendung verwendet drei Rollen.
 
@@ -629,9 +662,9 @@ Es existiert aktuell keine separate Rollen- oder Mapping-Tabelle.
 
 ---
 
-### 8.5 Backend-Autorisierung
+### 8.6 Backend-Autorisierung
 
-Die verbindliche Autorisierung erfolgt im Backend.
+Die verbindliche Autorisierung erfolgt im Backend über Spring Security.
 
 | Bereich | Zugriff |
 |---|---|
@@ -647,9 +680,16 @@ Die verbindliche Autorisierung erfolgt im Backend.
 
 ---
 
-### 8.6 Frontend-Autorisierung
+### 8.7 Frontend-Autorisierung
 
-Das Frontend blendet Funktionen rollenabhängig ein oder aus.
+Das Frontend nutzt zusätzlich rollenabhängige Benutzerführung.
+
+Dazu gehören:
+
+- Ausblenden nicht erlaubter UI-Funktionen
+- rollenabhängige Menüführung
+- eingeschränkte Bearbeitungsfunktionen
+- geschützte Frontend-Routen
 
 Beispiele:
 
@@ -658,11 +698,37 @@ Beispiele:
 - reine Lesefunktion für `VIEWER`
 
 > [!NOTE]
-> Die Frontend-Autorisierung dient der Benutzerführung. Sicherheitsrelevant ist ausschließlich die Backend-Prüfung.
+> Die Frontend-Autorisierung dient ausschließlich der Benutzerführung. Sicherheitsrelevant ist ausschließlich die Backend-Prüfung.
 
 ---
 
-### 8.7 Passwortsicherheit
+### 8.8 Protected Routing
+
+Authentifizierte Bereiche im Frontend werden zusätzlich über geschützte Routen abgesichert.
+
+Nicht angemeldete Benutzer erhalten keinen Zugriff auf geschützte Frontend-Bereiche.
+
+Dies erfolgt über zentrale Routing-Logik innerhalb der React-Anwendung.
+
+---
+
+### 8.9 Session-Verlust Handling
+
+Antwortet das Backend mit:
+
+```text
+HTTP 401 Unauthorized
+```
+
+interpretiert das Frontend dies als Verlust oder Ablauf der Session.
+
+In diesem Fall erfolgt ein zentraler Redirect auf die Login-Seite.
+
+Dies stellt sicher, dass Benutzer nach Session-Verlust kontrolliert erneut authentifiziert werden.
+
+---
+
+### 8.10 Passwortsicherheit
 
 Passwörter werden nicht im Klartext gespeichert.
 
@@ -672,9 +738,11 @@ Das Backend verwendet:
 BCryptPasswordEncoder
 ```
 
+zur sicheren Passwort-Hashbildung.
+
 ---
 
-### 8.8 CSRF
+### 8.11 CSRF
 
 CSRF-Schutz ist aktuell deaktiviert.
 
@@ -686,12 +754,19 @@ csrf(csrf -> csrf.disable())
 
 Diese Entscheidung wurde im aktuellen Pilotbetrieb bewusst pragmatisch getroffen.
 
+Begründung:
+
+- interne Nutzung
+- VPN-basierter Zugriff
+- sessionbasierte SPA Architektur
+- begrenzter Benutzerkreis
+
 > [!WARNING]
-> Bei künftigem echtem Internetbetrieb (Domain / DynDNS / Reverse Proxy) sollte die CSRF-Strategie erneut bewertet werden.
+> Bei künftigem echtem Internetbetrieb (Domain / DynDNS / Reverse Proxy) sollte die CSRF-Strategie erneut bewertet und ggf. gehärtet werden.
 
 ---
 
-### 8.9 Login-Sicherheit
+### 8.12 Login-Sicherheit
 
 Login-Fehlermeldungen sind bewusst neutral gehalten.
 
@@ -699,6 +774,22 @@ Ziel:
 
 - keine Preisgabe sicherheitsrelevanter Details
 - keine Information, ob Benutzername oder Passwort falsch war
+- Reduktion möglicher Benutzerenumeration
+
+---
+
+### 8.13 Sicherheitsprinzipien
+
+Die aktuelle Sicherheitsarchitektur folgt folgenden Grundprinzipien:
+
+- serverseitige Authentifizierung
+- zentrale Autorisierung im Backend
+- keine Tokenverwaltung im Frontend
+- minimale Rechte nach Rollenmodell
+- geschützte Frontend-Routen
+- neutrale Fehlermeldungen
+- Session-basierter Zugriff
+- Backend nicht direkt extern exponiert
 
 ---
 
