@@ -39,8 +39,8 @@
       - [PROD](#prod)
     - [Monitoring](#monitoring)
     - [6.4 Weitere Docker-Netzwerke](#64-weitere-docker-netzwerke)
-      - [mariadb\_default](#mariadb_default)
-      - [uptime-kuma\_default](#uptime-kuma_default)
+      - [mariadb_default](#mariadb_default)
+      - [uptime-kuma_default](#uptime-kuma_default)
   - [7. Frontend-Backend-Kommunikation](#7-frontend-backend-kommunikation)
     - [DEV](#dev-1)
     - [PROD](#prod-1)
@@ -96,16 +96,22 @@
     - [13.2 Backend Monitoring](#132-backend-monitoring)
     - [13.3 Benachrichtigung](#133-benachrichtigung)
   - [14. Testing](#14-testing)
-    - [Frontend](#frontend)
-    - [Backend](#backend)
+    - [14.1 Frontend Testing](#141-frontend-testing)
+    - [14.2 Backend Testing](#142-backend-testing)
+    - [14.3 Teststrategie Ausblick](#143-teststrategie-ausblick)
   - [15. Architekturentscheidungen](#15-architekturentscheidungen)
     - [15.1 Spring Boot statt Node.js](#151-spring-boot-statt-nodejs)
-    - [15.2 Session statt JWT](#152-session-statt-jwt)
-    - [15.3 JdbcTemplate statt JPA](#153-jdbctemplate-statt-jpa)
-    - [15.4 nginx Reverse Proxy](#154-nginx-reverse-proxy)
-    - [15.5 Docker auf NAS](#155-docker-auf-nas)
-    - [15.6 MariaDB Port 3306 bewusst offen](#156-mariadb-port-3306-bewusst-offen)
+    - [15.2 Sessionbasierte Authentifizierung statt JWT](#152-sessionbasierte-authentifizierung-statt-jwt)
+    - [15.3 JdbcTemplate statt JPA / Hibernate](#153-jdbctemplate-statt-jpa--hibernate)
+    - [15.4 nginx Reverse Proxy für Frontend/API Integration](#154-nginx-reverse-proxy-für-frontendapi-integration)
+    - [15.5 Docker Deployment auf NAS](#155-docker-deployment-auf-nas)
+    - [15.6 MariaDB Port 3306 bewusst veröffentlicht](#156-mariadb-port-3306-bewusst-veröffentlicht)
+    - [15.7 React Query für Server State](#157-react-query-für-server-state)
+    - [15.8 React Hook Form für Formulararchitektur](#158-react-hook-form-für-formulararchitektur)
   - [16. Geplante Architektur-Erweiterungen](#16-geplante-architektur-erweiterungen)
+    - [Fachliche Erweiterungen](#fachliche-erweiterungen)
+    - [Technische Erweiterungen](#technische-erweiterungen)
+    - [Betriebsreife](#betriebsreife)
 
 ---
 
@@ -395,6 +401,7 @@ DEV und PROD nutzen getrennte Datenbanken innerhalb derselben MariaDB-Instanz:
 - phpMyAdmin
 - Portainer
 - mariadb-backup
+-
 
 ---
 
@@ -604,11 +611,11 @@ Das Frontend verwaltet keine Tokens.
 
 ### 8.2 Authentifizierungsendpunkte
 
-| Endpunkt | Zweck |
-|---|---|
-| `POST /api/auth/login` | Benutzer anmelden |
-| `POST /api/auth/logout` | Benutzer abmelden |
-| `GET /api/auth/me` | aktuelle Session prüfen |
+| Endpunkt                | Zweck                   |
+| ----------------------- | ----------------------- |
+| `POST /api/auth/login`  | Benutzer anmelden       |
+| `POST /api/auth/logout` | Benutzer abmelden       |
+| `GET /api/auth/me`      | aktuelle Session prüfen |
 
 ---
 
@@ -642,7 +649,7 @@ Eigenschaften:
 Das Frontend sendet API Requests explizit mit:
 
 ```javascript
-credentials: "include"
+credentials: "include";
 ```
 
 Dadurch werden Browser-Cookies einschließlich Session-Cookies an das Backend übermittelt.
@@ -657,11 +664,11 @@ Ohne diese Konfiguration würde die Session nicht korrekt zwischen Browser und B
 
 Die Anwendung verwendet drei Rollen.
 
-| Rolle | Rechte |
-|---|---|
-| `ADMIN` | vollständige Mitgliederverwaltung + Benutzerverwaltung |
-| `EDITOR` | Mitglieder lesen und bearbeiten |
-| `VIEWER` | Mitglieder nur lesen |
+| Rolle    | Rechte                                                 |
+| -------- | ------------------------------------------------------ |
+| `ADMIN`  | vollständige Mitgliederverwaltung + Benutzerverwaltung |
+| `EDITOR` | Mitglieder lesen und bearbeiten                        |
+| `VIEWER` | Mitglieder nur lesen                                   |
 
 Die Rollen werden direkt in:
 
@@ -679,17 +686,17 @@ Es existiert aktuell keine separate Rollen- oder Mapping-Tabelle.
 
 Die verbindliche Autorisierung erfolgt im Backend über Spring Security.
 
-| Bereich | Zugriff |
-|---|---|
-| `/api/auth/login` | öffentlich |
-| `/api/auth/me` | angemeldete Benutzer |
-| `/api/auth/logout` | angemeldete Benutzer |
-| `/api/admin/**` | nur `ADMIN` |
-| `GET /api/lookups/**` | `ADMIN`, `EDITOR`, `VIEWER` |
-| `GET /api/members/**` | `ADMIN`, `EDITOR`, `VIEWER` |
-| `POST /api/members` | `ADMIN`, `EDITOR` |
-| `PUT /api/members/**` | `ADMIN`, `EDITOR` |
-| `DELETE /api/members/**` | nur `ADMIN` |
+| Bereich                  | Zugriff                     |
+| ------------------------ | --------------------------- |
+| `/api/auth/login`        | öffentlich                  |
+| `/api/auth/me`           | angemeldete Benutzer        |
+| `/api/auth/logout`       | angemeldete Benutzer        |
+| `/api/admin/**`          | nur `ADMIN`                 |
+| `GET /api/lookups/**`    | `ADMIN`, `EDITOR`, `VIEWER` |
+| `GET /api/members/**`    | `ADMIN`, `EDITOR`, `VIEWER` |
+| `POST /api/members`      | `ADMIN`, `EDITOR`           |
+| `PUT /api/members/**`    | `ADMIN`, `EDITOR`           |
+| `DELETE /api/members/**` | nur `ADMIN`                 |
 
 ---
 
@@ -816,53 +823,71 @@ Das Backend stellt eine REST-API unterhalb von:
 
 bereit.
 
+Die API verwendet ein konsistentes JSON-basiertes Request-/Response-Modell.
+
+Fehler werden zentral über eine standardisierte Fehlerstruktur zurückgegeben.
+
+Dies umfasst insbesondere:
+
+- Validierungsfehler
+- fachliche Fehler
+- Authentifizierungsfehler
+- Datenbankkonflikte
+- allgemeine Serverfehler
+
+Vorteile:
+
+- konsistente Frontend-Integration
+- strukturierte Fehlerbehandlung
+- feldgenaues Mapping von Validierungsfehlern
+
 ---
 
 ### 9.1 Auth API
 
-| Methode | Endpunkt | Zweck |
-|---|---|---|
-| `POST` | `/api/auth/login` | Anmeldung |
-| `POST` | `/api/auth/logout` | Abmeldung |
-| `GET` | `/api/auth/me` | Session prüfen |
+| Methode | Endpunkt           | Zweck          |
+| ------- | ------------------ | -------------- |
+| `POST`  | `/api/auth/login`  | Anmeldung      |
+| `POST`  | `/api/auth/logout` | Abmeldung      |
+| `GET`   | `/api/auth/me`     | Session prüfen |
 
 ---
 
 ### 9.2 Mitglieder API
 
-| Methode | Endpunkt | Zweck |
-|---|---|---|
-| `GET` | `/api/members` | Mitgliederliste |
-| `GET` | `/api/members/{mitgliedsnummer}` | Mitglied Detail |
-| `POST` | `/api/members` | Mitglied anlegen |
-| `PUT` | `/api/members/{mitgliedsnummer}/stammdaten` | Stammdaten ändern |
-| `PUT` | `/api/members/{mitgliedsnummer}/kontakt` | Kontaktdaten ändern |
-| `PUT` | `/api/members/{mitgliedsnummer}/mitgliedschaft` | Mitgliedschaft ändern |
-| `GET` | `/api/members/{mitgliedsnummer}/datenschutz` | Datenschutz lesen |
-| `PUT` | `/api/members/{mitgliedsnummer}/datenschutz` | Datenschutz ändern |
-| `GET` | `/api/members/{mitgliedsnummer}/chorkleidung` | Chorkleidung lesen |
-| `PUT` | `/api/members/{mitgliedsnummer}/chorkleidung` | Chorkleidung ändern |
+| Methode | Endpunkt                                        | Zweck                 |
+| ------- | ----------------------------------------------- | --------------------- |
+| `GET`   | `/api/members`                                  | Mitgliederliste       |
+| `GET`   | `/api/members/{mitgliedsnummer}`                | Mitglied Detail       |
+| `POST`  | `/api/members`                                  | Mitglied anlegen      |
+| `PUT`   | `/api/members/{mitgliedsnummer}/stammdaten`     | Stammdaten ändern     |
+| `PUT`   | `/api/members/{mitgliedsnummer}/kontakt`        | Kontaktdaten ändern   |
+| `PUT`   | `/api/members/{mitgliedsnummer}/mitgliedschaft` | Mitgliedschaft ändern |
+| `GET`   | `/api/members/{mitgliedsnummer}/datenschutz`    | Datenschutz lesen     |
+| `PUT`   | `/api/members/{mitgliedsnummer}/datenschutz`    | Datenschutz ändern    |
+| `GET`   | `/api/members/{mitgliedsnummer}/chorkleidung`   | Chorkleidung lesen    |
+| `PUT`   | `/api/members/{mitgliedsnummer}/chorkleidung`   | Chorkleidung ändern   |
 
 ---
 
 ### 9.3 Lookup API
 
-| Methode | Endpunkt | Zweck |
-|---|---|---|
-| `GET` | `/api/lookups/member-status` | Mitgliederstatus |
-| `GET` | `/api/lookups/voices` | Stimmen |
+| Methode | Endpunkt                     | Zweck            |
+| ------- | ---------------------------- | ---------------- |
+| `GET`   | `/api/lookups/member-status` | Mitgliederstatus |
+| `GET`   | `/api/lookups/voices`        | Stimmen          |
 
 ---
 
 ### 9.4 Admin API
 
-| Methode | Endpunkt | Zweck |
-|---|---|---|
-| `GET` | `/api/admin/users` | Benutzerliste |
-| `POST` | `/api/admin/users` | Benutzer anlegen |
-| `PUT` | `/api/admin/users/{id}/role` | Rolle ändern |
-| `PUT` | `/api/admin/users/{id}/active` | aktiv/inaktiv |
-| `PUT` | `/api/admin/users/{id}/password` | Passwort setzen |
+| Methode | Endpunkt                         | Zweck            |
+| ------- | -------------------------------- | ---------------- |
+| `GET`   | `/api/admin/users`               | Benutzerliste    |
+| `POST`  | `/api/admin/users`               | Benutzer anlegen |
+| `PUT`   | `/api/admin/users/{id}/role`     | Rolle ändern     |
+| `PUT`   | `/api/admin/users/{id}/active`   | aktiv/inaktiv    |
+| `PUT`   | `/api/admin/users/{id}/password` | Passwort setzen  |
 
 ---
 
@@ -878,15 +903,15 @@ Die Kommunikation mit dem Backend erfolgt ausschließlich über die REST API.
 
 ### 10.1 Technologiestack
 
-| Technologie | Zweck |
-|---|---|
-| React 19 | Benutzeroberfläche |
-| Vite | Build und Entwicklungsumgebung |
-| React Router | Clientseitiges Routing |
-| React Query | Server State Management |
-| React Hook Form | Formularverwaltung |
-| Vitest | Frontend Unit Tests |
-| nginx | Auslieferung / Reverse Proxy |
+| Technologie     | Zweck                          |
+| --------------- | ------------------------------ |
+| React 19        | Benutzeroberfläche             |
+| Vite            | Build und Entwicklungsumgebung |
+| React Router    | Clientseitiges Routing         |
+| React Query     | Server State Management        |
+| React Hook Form | Formularverwaltung             |
+| Vitest          | Frontend Unit Tests            |
+| nginx           | Auslieferung / Reverse Proxy   |
 
 ---
 
@@ -946,13 +971,6 @@ Verantwortlichkeiten:
 
 Die Authentifizierungsinformationen werden über einen zentralen React Context bereitgestellt.
 
-Vorteile:
-
-- zentrale Auth-Verwaltung
-- keine verteilte Sessionlogik
-- einfache Nutzung in Komponenten
-- konsistente Sicherheitssteuerung
-
 ---
 
 ### 10.4 API Layer
@@ -969,17 +987,10 @@ Verantwortlichkeiten:
 Die Sessionkommunikation erfolgt explizit mit:
 
 ```javascript
-credentials: "include"
+credentials: "include";
 ```
 
 Dadurch werden Session-Cookies korrekt an das Backend übertragen.
-
-Vorteile:
-
-- zentrale API Logik
-- konsistente Fehlerbehandlung
-- reduzierte Code-Duplizierung
-- klare Backend-Kommunikation
 
 ---
 
@@ -994,23 +1005,11 @@ Verantwortlichkeiten:
 - Login Routing
 - Detailnavigation
 
-Geschützte Bereiche werden zentral abgesichert.
-
-Nicht authentifizierte Benutzer erhalten keinen Zugriff auf geschützte Bereiche.
-
 ---
 
 ### 10.6 Page Layer
 
 Pages repräsentieren fachliche Anwendungsseiten.
-
-Typische Verantwortlichkeiten:
-
-- Seitenstruktur
-- Layout
-- Datenzusammenführung
-- Navigation
-- Seitenlogik
 
 Beispiele:
 
@@ -1034,12 +1033,6 @@ Beispiele:
 - Statusanzeigen
 - Fehlermeldungen
 
-Ziel:
-
-- Wiederverwendbarkeit
-- konsistente UI
-- reduzierte Redundanz
-
 ---
 
 ### 10.8 Hook Layer
@@ -1052,8 +1045,6 @@ Beispiele:
 - Auth Status
 - Form State
 - API Interaktionen
-
-Dies reduziert Logikduplikation innerhalb von Komponenten.
 
 ---
 
@@ -1068,8 +1059,6 @@ Beispiele:
 - Payload Mapping
 - Default Value Erstellung
 - Backend Error Mapping
-
-Diese Trennung verbessert Testbarkeit und Wartbarkeit.
 
 ---
 
@@ -1089,22 +1078,11 @@ Verantwortlichkeiten:
 - Dirty Tracking
 - Field State Management
 
-Vorteile:
-
-- performante Formulare
-- saubere Validierung
-- klare State Verwaltung
-- gute Testbarkeit
-
 ---
 
 ### 10.11 Auto-Save Architektur
 
 Die Formularspeicherung erfolgt automatisch über einen generischen Hook-basierten Mechanismus.
-
-Die Implementierung ist nicht formularspezifisch, sondern wiederverwendbar.
-
-Prinzip:
 
 ```mermaid
 sequenceDiagram
@@ -1127,13 +1105,6 @@ sequenceDiagram
     AutoSaveHook-->>User: gespeichert
 ```
 
-Vorteile:
-
-- wiederverwendbar
-- konsistentes Verhalten
-- reduzierte Formularkomplexität
-- zentrale Wartung
-
 ---
 
 ### 10.12 Session Restore
@@ -1145,12 +1116,6 @@ Beim Start prüft das Frontend automatisch:
 ```
 
 um eine bestehende Session wiederherzustellen.
-
-Dies ermöglicht:
-
-- persistente Login-Sessions
-- bessere Benutzererfahrung
-- kontrollierte App-Initialisierung
 
 ---
 
@@ -1170,8 +1135,6 @@ Das Frontend:
 - verwirft den Auth Status
 - leitet auf Login um
 
-Dies verhindert inkonsistente Auth-Zustände.
-
 ---
 
 ### 10.14 Backend Error Mapping
@@ -1183,8 +1146,6 @@ Dies ermöglicht:
 - feldgenaue Fehlermeldungen
 - konsistente Formularfehler
 - saubere Benutzerführung
-
-Statt generischer Fehlermeldungen können konkrete Formularfelder markiert werden.
 
 ---
 
@@ -1199,7 +1160,7 @@ Beispiele:
 - VIEWER nur Lesefunktion
 
 > [!NOTE]
-> Diese Steuerung dient der Benutzerführung. Sicherheitsrelevant bleibt ausschließlich die Backend-Autorisierung.
+> Sicherheitsrelevant bleibt ausschließlich die Backend-Autorisierung.
 
 ---
 
@@ -1207,7 +1168,7 @@ Beispiele:
 
 Das Frontend enthält automatisierte Unit Tests.
 
-Aktuell abgedeckte Bereiche:
+Aktuell abgedeckt:
 
 - validationHelpers
 - dateHelpers
@@ -1223,17 +1184,13 @@ Stand:
 64 erfolgreiche Unit Tests
 ```
 
-Ziel:
-
-- Qualitätssicherung der Formularlogik
-- Validierungsabsicherung
-- Regressionserkennung
-
 ---
 
 ## 11. Backend-Architektur
 
 Das Backend folgt einer klassischen Schichtenarchitektur.
+
+---
 
 ### 11.1 Schichtenmodell
 
@@ -1255,14 +1212,29 @@ graph TD
 
 ### 11.2 Verantwortlichkeiten
 
-| Schicht | Aufgabe |
-|---|---|
-| Controller | REST-Endpunkte |
-| Service | Geschäftslogik |
-| Repository | SQL Zugriff |
-| Mapper | DTO Mapping |
-| DTOs | API Modelle |
-| Exception Handling | zentrale Fehlerbehandlung |
+| Schicht            | Aufgabe                                          |
+| ------------------ | ------------------------------------------------ |
+| Controller         | REST-Endpunkte                                   |
+| Service            | Geschäftslogik                                   |
+| Repository         | SQL-basierter Datenzugriff                       |
+| Mapper             | Transformation zwischen SQL-Ergebnissen und DTOs |
+| DTOs               | API Request-/Response-Modelle                    |
+| Exception Handling | zentrale Fehlerbehandlung                        |
+
+Das Backend verwendet bewusst kein ORM-basiertes Entity-Modell (z. B. JPA/Hibernate).
+
+Der Datenzugriff erfolgt direkt über:
+
+```text
+JdbcTemplate + SQL
+```
+
+Vorteile:
+
+- volle Kontrolle über SQL
+- gute Passung zur bestehenden relationalen Datenstruktur
+- transparente Query-Ausführung
+- reduzierte ORM-Komplexität
 
 ---
 
@@ -1319,14 +1291,20 @@ Ziel:
 
 MariaDB bildet die zentrale Datenhaltung.
 
+Die Datenbank dient aktuell nicht ausschließlich der Web-Anwendung.
+
+Aufgrund der schrittweisen Migration aus der Microsoft-Access-Altwelt wird die Datenbank weiterhin auch durch bestehende Access-/ODBC-basierte Prozesse genutzt.
+
+Dies ist eine bewusste Übergangsarchitektur.
+
 ---
 
 ### 12.1 Umgebungen
 
-| Umgebung | Datenbank |
-|---|---|
-| DEV | `emc_mitglieder_dev` |
-| PROD | `emc_mitglieder` |
+| Umgebung | Datenbank            |
+| -------- | -------------------- |
+| DEV      | `emc_mitglieder_dev` |
+| PROD     | `emc_mitglieder`     |
 
 ---
 
@@ -1384,6 +1362,8 @@ Uptime Kuma
 
 ### 13.1 Überwachte Komponenten
 
+Aktuell überwacht:
+
 - Frontend DEV
 - Frontend PROD
 - Backend DEV
@@ -1397,32 +1377,54 @@ Uptime Kuma
 
 ### 13.2 Backend Monitoring
 
-Backend liefert bewusst:
+Die geschützten Backend-Endpunkte liefern ohne Authentifizierung bewusst:
 
 ```text
 HTTP 401 Unauthorized
 ```
 
-als positives Lebenszeichen.
+Dies wird im Monitoring als positives Lebenszeichen interpretiert.
+
+Begründung:
+
+- Backend erreichbar
+- Spring Security aktiv
+- Authentifizierung funktioniert erwartungsgemäß
 
 > [!NOTE]
-> Das bedeutet nicht „Fehler“, sondern „Security aktiv“.
+> HTTP 401 bedeutet in diesem Kontext keinen Fehler, sondern ein korrekt reagierendes gesichertes Backend.
 
 ---
 
 ### 13.3 Benachrichtigung
 
-Benachrichtigungen erfolgen via Telegram.
+Benachrichtigungen erfolgen über Telegram.
+
+Dies ermöglicht:
+
+- schnelle Statusmeldungen
+- Ausfallbenachrichtigungen
+- einfache Betriebsüberwachung
+
+Die Detailkonfiguration wird im Betriebs- und Troubleshooting-Handbuch dokumentiert.
 
 ---
 
 ## 14. Testing
 
-### Frontend
+Automatisierte Tests sind sowohl im Frontend als auch im Backend vorhanden.
 
-Vitest Unit Tests vorhanden.
+---
 
-Aktuell abgedeckt:
+### 14.1 Frontend Testing
+
+Das Frontend verwendet:
+
+```text
+Vitest
+```
+
+Aktuell abgedeckte Bereiche:
 
 - validationHelpers
 - dateHelpers
@@ -1438,13 +1440,19 @@ Stand:
 64 erfolgreiche Unit Tests
 ```
 
+Ziele:
+
+- Qualitätssicherung der Formularlogik
+- Validierungsabsicherung
+- Regressionserkennung
+
 ---
 
-### Backend
+### 14.2 Backend Testing
 
-Automatisierte Tests vorhanden.
+Für das Backend existieren automatisierte Tests.
 
-Abgedeckte Bereiche:
+Aktuell abgedeckte Bereiche:
 
 - Auth
 - Admin User
@@ -1452,7 +1460,7 @@ Abgedeckte Bereiche:
 - Member Service
 - Mapper
 - Security
-- Context
+- Spring Context
 
 Stand:
 
@@ -1460,13 +1468,40 @@ Stand:
 35 erfolgreiche Tests
 ```
 
+Ziele:
+
+- API Absicherung
+- Security Absicherung
+- Service Logik Prüfung
+- Regressionserkennung
+
+---
+
+### 14.3 Teststrategie Ausblick
+
+Die Teststrategie wird schrittweise erweitert.
+
+Geplante Ausbaustufen:
+
+- zusätzliche Service Tests
+- Integrationstests
+- API End-to-End Prüfungen
+- weitere Security Tests
+
+> [!NOTE]
+> Die aktuelle Teststrategie entspricht bewusst dem aktuellen MVP-/Pilotbetriebsstatus und wird mit wachsender Produktivreife ausgebaut.
+
 ---
 
 ## 15. Architekturentscheidungen
 
+Dieses Kapitel dokumentiert bewusste technische Architekturentscheidungen des Projekts.
+
+---
+
 ### 15.1 Spring Boot statt Node.js
 
-Frühe Konzepte sahen Node.js vor.
+Frühere Konzeptstände sahen ein Node.js Backend vor.
 
 Final entschieden:
 
@@ -1476,77 +1511,173 @@ Spring Boot 3
 
 Gründe:
 
-- Spring Security
-- robuste Architektur
-- Validierung
-- Testbarkeit
+- robuste Enterprise-Plattform
+- Spring Security Integration
+- starke Validierungsunterstützung
+- klare Schichtenarchitektur
+- gute Testbarkeit
 
 ---
 
-### 15.2 Session statt JWT
+### 15.2 Sessionbasierte Authentifizierung statt JWT
+
+Die Anwendung verwendet serverseitige Sessions.
 
 Gründe:
 
-- einfachere Integration
-- keine Tokenverwaltung
-- Session Restore
-- klassische Web-Anwendung
+- einfache Integration mit Spring Security
+- keine Tokenverwaltung im Frontend
+- Session Restore via `/api/auth/me`
+- gute Eignung für klassische Web-Anwendungen
 
 ---
 
-### 15.3 JdbcTemplate statt JPA
+### 15.3 JdbcTemplate statt JPA / Hibernate
+
+Die Anwendung verwendet:
+
+```text
+JdbcTemplate
+```
+
+statt ORM-basiertem Entity Mapping.
 
 Gründe:
 
 - volle SQL Kontrolle
-- bestehende DB passt gut
-- weniger ORM Komplexität
+- gute Passung zur bestehenden relationalen Struktur
+- transparente Query-Ausführung
+- geringere technische Komplexität
 
 ---
 
-### 15.4 nginx Reverse Proxy
+### 15.4 nginx Reverse Proxy für Frontend/API Integration
+
+Die React-Anwendung wird über nginx ausgeliefert.
+
+Zusätzlich routet nginx API-Anfragen via:
+
+```text
+/api/
+```
+
+an das jeweilige Backend.
 
 Gründe:
 
-- Backend nicht direkt exponieren
+- keine direkte Backend-Exponierung
 - gleiche Origin
+- vereinfachte Browserkommunikation
 - saubere DEV/PROD Trennung
-- SPA Support
+- SPA Routing Support
 
 ---
 
-### 15.5 Docker auf NAS
+### 15.5 Docker Deployment auf NAS
+
+Die Anwendung wird containerisiert auf dem UGREEN NAS betrieben.
 
 Gründe:
 
-- reproduzierbar
-- modular
-- gut administrierbar
-- Monitoring integrierbar
+- reproduzierbarer Betrieb
+- klare Trennung von Diensten
+- gute Erweiterbarkeit
+- Monitoring Integration
+- einfache Verwaltung via Docker / Portainer
 
 ---
 
-### 15.6 MariaDB Port 3306 bewusst offen
+### 15.6 MariaDB Port 3306 bewusst veröffentlicht
+
+MariaDB ist im LAN/VPN erreichbar.
 
 Grund:
 
-- Access / ODBC Altwelt
+- bestehende Microsoft Access / ODBC Prozesse
+- Übergangsarchitektur während der Migration
 
 > [!WARNING]
-> Nicht ins öffentliche Internet exponieren.
+> Port 3306 darf nicht direkt öffentlich ins Internet exponiert werden.
+
+---
+
+### 15.7 React Query für Server State
+
+Das Frontend verwendet:
+
+```text
+React Query
+```
+
+zur Verwaltung serverseitiger Daten.
+
+Gründe:
+
+- konsistente API-Datenverwaltung
+- Caching
+- Mutation Handling
+- klare Trennung UI State / Server State
+- reduzierte Komponentenkomplexität
+
+---
+
+### 15.8 React Hook Form für Formulararchitektur
+
+Die Formulararchitektur basiert auf:
+
+```text
+React Hook Form
+```
+
+Gründe:
+
+- performante Formularverwaltung
+- klarer Formularzustand
+- gute Validierungsintegration
+- saubere Fehlerbehandlung
+- gute Testbarkeit
 
 ---
 
 ## 16. Geplante Architektur-Erweiterungen
 
-Perspektivisch:
+Die aktuelle Architektur unterstützt bereits einen produktivnahen Pilotbetrieb.
 
-- Domain / DynDNS Zugriff
-- Reverse Proxy / TLS
-- Security Härtung
+Ein vollständiger Mehrbenutzer-Rollout mit echter externer Erreichbarkeit ist perspektivisch vorgesehen.
+
+---
+
+### Fachliche Erweiterungen
+
+Geplant:
+
 - Ehrungen
 - Funktionen
 - Verteiler
-- vollständige Access Ablösung
-- mehr Integrationstests
-- erweitertes Backup / Restore
+- vollständige Access-Ablösung
+
+---
+
+### Technische Erweiterungen
+
+Geplant:
+
+- Domain / DynDNS Zugriff
+- Reverse Proxy
+- TLS / HTTPS
+- Security Härtung
+- erweiterte Integrationstests
+- Backup / Restore Ausbau
+- professioneller Mehrbenutzerbetrieb
+
+---
+
+### Betriebsreife
+
+Mit zunehmender Produktivnutzung werden insbesondere folgende Bereiche weiter professionalisiert:
+
+- Monitoring
+- Deployment Prozesse
+- Recovery Prozesse
+- Sicherheitsmaßnahmen
+- Betriebsdokumentation
