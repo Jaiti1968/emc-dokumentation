@@ -39,8 +39,8 @@
       - [PROD](#prod)
     - [Monitoring](#monitoring)
     - [6.4 Weitere Docker-Netzwerke](#64-weitere-docker-netzwerke)
-      - [mariadb_default](#mariadb_default)
-      - [uptime-kuma_default](#uptime-kuma_default)
+      - [mariadb\_default](#mariadb_default)
+      - [uptime-kuma\_default](#uptime-kuma_default)
   - [7. Frontend-Backend-Kommunikation](#7-frontend-backend-kommunikation)
     - [DEV](#dev-1)
     - [PROD](#prod-1)
@@ -1434,12 +1434,6 @@ Aktuell abgedeckte Bereiche:
 - datenschutzValidator
 - chorkleidungValidator
 
-Stand:
-
-```text
-64 erfolgreiche Unit Tests
-```
-
 Ziele:
 
 - Qualitätssicherung der Formularlogik
@@ -1461,12 +1455,6 @@ Aktuell abgedeckte Bereiche:
 - Mapper
 - Security
 - Spring Context
-
-Stand:
-
-```text
-35 erfolgreiche Tests
-```
 
 Ziele:
 
