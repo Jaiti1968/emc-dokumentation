@@ -401,7 +401,6 @@ DEV und PROD nutzen getrennte Datenbanken innerhalb derselben MariaDB-Instanz:
 - phpMyAdmin
 - Portainer
 - mariadb-backup
--
 
 ---
 
@@ -1572,6 +1571,14 @@ Gründe:
 - gute Erweiterbarkeit
 - Monitoring Integration
 - einfache Verwaltung via Docker / Portainer
+
+Aktueller Betriebsstandard verwendet definierte NAS Build-Verzeichnisse unter:
+
+```text
+/volume1/docker/build/
+```
+
+Details siehe Deployment-Handbuch.
 
 ---
 
