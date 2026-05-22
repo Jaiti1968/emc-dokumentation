@@ -15,6 +15,8 @@
   - [3. Systemvoraussetzungen](#3-systemvoraussetzungen)
     - [3.1 Hardware](#31-hardware)
     - [3.2 Software](#32-software)
+      - [Infrastrukturservices](#infrastrukturservices)
+      - [Anwendungskomponenten](#anwendungskomponenten)
     - [3.3 Netzwerkzugang](#33-netzwerkzugang)
   - [4. Infrastrukturübersicht](#4-infrastrukturübersicht)
     - [4.1 Plattform](#41-plattform)
@@ -28,6 +30,7 @@
     - [5.3 Kommunikationsmodell](#53-kommunikationsmodell)
       - [DEV](#dev-1)
       - [PROD](#prod-1)
+      - [Architekturprinzip](#architekturprinzip)
     - [5.4 Infrastruktur-Netzwerke](#54-infrastruktur-netzwerke)
       - [mariadb\_default](#mariadb_default)
       - [uptime-kuma\_default](#uptime-kuma_default)
@@ -38,6 +41,7 @@
     - [6.3 Datenbank Konfiguration](#63-datenbank-konfiguration)
     - [6.4 Backup Konfiguration](#64-backup-konfiguration)
     - [6.5 Stack-Verwaltung](#65-stack-verwaltung)
+    - [6.6 Konfigurationsgrundsätze](#66-konfigurationsgrundsätze)
   - [7. Erstinstallation](#7-erstinstallation)
     - [7.1 Installationsprinzip](#71-installationsprinzip)
     - [7.2 Docker Host vorbereiten](#72-docker-host-vorbereiten)
@@ -54,18 +58,20 @@
     - [8.2 Start von Diensten](#82-start-von-diensten)
     - [8.3 Stop von Diensten](#83-stop-von-diensten)
     - [8.4 Neustart](#84-neustart)
-    - [8.5 Logprüfung](#85-logprüfung)
-    - [8.6 Betriebsprüfung Frontend](#86-betriebsprüfung-frontend)
-    - [8.7 Betriebsprüfung Backend](#87-betriebsprüfung-backend)
-    - [8.8 Datenbankbetrieb](#88-datenbankbetrieb)
-    - [8.9 Portainer Betrieb](#89-portainer-betrieb)
+    - [8.5 Redeployment](#85-redeployment)
+    - [8.6 Logprüfung](#86-logprüfung)
+    - [8.7 Betriebsprüfung Frontend](#87-betriebsprüfung-frontend)
+    - [8.8 Betriebsprüfung Backend](#88-betriebsprüfung-backend)
+    - [8.9 Datenbankbetrieb](#89-datenbankbetrieb)
+    - [8.10 Portainer Betrieb](#810-portainer-betrieb)
   - [9. Monitoring und Überwachung](#9-monitoring-und-überwachung)
     - [9.1 Überwachte Systeme](#91-überwachte-systeme)
     - [9.2 Frontend Monitoring](#92-frontend-monitoring)
     - [9.3 Backend Monitoring](#93-backend-monitoring)
     - [9.4 Infrastruktur Monitoring](#94-infrastruktur-monitoring)
-    - [9.5 Benachrichtigungen](#95-benachrichtigungen)
-    - [9.6 Monitoring Routine](#96-monitoring-routine)
+    - [9.5 Monitoring Grenzen](#95-monitoring-grenzen)
+    - [9.6 Benachrichtigungen](#96-benachrichtigungen)
+    - [9.7 Monitoring Routine](#97-monitoring-routine)
   - [10. Backup-Konzept](#10-backup-konzept)
     - [10.1 Backup Strategie](#101-backup-strategie)
     - [10.2 Gesicherte Datenbanken](#102-gesicherte-datenbanken)
@@ -75,6 +81,35 @@
     - [10.6 Operative Backup Prüfung](#106-operative-backup-prüfung)
     - [10.7 Verantwortlichkeit](#107-verantwortlichkeit)
     - [10.8 Restore](#108-restore)
+  - [11. Benutzer- und Administrationszugänge](#11-benutzer--und-administrationszugänge)
+    - [11.1 NAS Administration](#111-nas-administration)
+    - [11.2 Portainer Administration](#112-portainer-administration)
+    - [11.3 Datenbankadministration](#113-datenbankadministration)
+    - [11.4 MariaDB Direktzugriff](#114-mariadb-direktzugriff)
+    - [11.5 Anwendungsadministration](#115-anwendungsadministration)
+  - [12. Sicherheitsrahmen](#12-sicherheitsrahmen)
+    - [12.1 Zugriffsmodell](#121-zugriffsmodell)
+    - [12.2 Authentifizierung](#122-authentifizierung)
+    - [12.3 Rollenmodell](#123-rollenmodell)
+    - [12.4 Backend Exponierung](#124-backend-exponierung)
+    - [12.5 Datenbankzugriff](#125-datenbankzugriff)
+    - [12.6 CSRF Status](#126-csrf-status)
+    - [12.7 Monitoring als Sicherheitsaspekt](#127-monitoring-als-sicherheitsaspekt)
+  - [13. Wartung](#13-wartung)
+    - [13.1 Regelmäßige Kontrollen](#131-regelmäßige-kontrollen)
+    - [13.2 Container Wartung](#132-container-wartung)
+    - [13.3 Docker Image Bereinigung](#133-docker-image-bereinigung)
+    - [13.4 Datenbank Wartung](#134-datenbank-wartung)
+    - [13.5 Backup Wartung](#135-backup-wartung)
+    - [13.6 Benutzerpflege](#136-benutzerpflege)
+    - [13.7 Wartung nach Änderungen](#137-wartung-nach-änderungen)
+  - [14. Betriebsgrenzen und aktueller Status](#14-betriebsgrenzen-und-aktueller-status)
+    - [14.1 Pilotbetriebsstatus](#141-pilotbetriebsstatus)
+    - [14.2 Mehrbenutzerstatus](#142-mehrbenutzerstatus)
+    - [14.3 Access Übergangsarchitektur](#143-access-übergangsarchitektur)
+    - [14.4 Internetbetrieb](#144-internetbetrieb)
+    - [14.5 Betriebsreife](#145-betriebsreife)
+    - [14.6 Technische Weiterentwicklung](#146-technische-weiterentwicklung)
 
 ---
 
@@ -200,16 +235,25 @@ Erforderlich:
 
 ### 3.2 Software
 
-Aktuell eingesetzte Plattformsoftware:
+Aktuell eingesetzte Softwarekomponenten:
+
+**Plattform**
 
 - Docker
 - Portainer
-- nginx
+ 
+---
+
+#### Infrastrukturservices
+
 - MariaDB
 - Uptime Kuma
 - phpMyAdmin
+- mariadb-backup
 
-Anwendungskomponenten:
+---
+
+#### Anwendungskomponenten
 
 Frontend:
 
@@ -223,11 +267,10 @@ Backend:
 - Spring Boot 3
 - Spring Security
 
-Datenbank:
-
-- MariaDB
+- JdbcTemplate
 
 ---
+
 
 ### 3.3 Netzwerkzugang
 
@@ -307,7 +350,7 @@ Komponenten:
 
 - DEV Frontend
 - DEV Backend
-- DEV Datenbank
+- separate DEV Datenbank innerhalb gemeinsamer MariaDB Instanz
 
 ---
 
@@ -322,7 +365,7 @@ Komponenten:
 
 - PROD Frontend
 - PROD Backend
-- PROD Datenbank
+- separate PROD Datenbank innerhalb gemeinsamer MariaDB Instanz
 
 > [!NOTE]
 > DEV und PROD teilen sich aktuell dieselbe MariaDB-Instanz, verwenden jedoch getrennte Datenbanken.
@@ -375,16 +418,33 @@ Dieses Netzwerk bildet das zentrale Kommunikationsnetz der EMC Anwendung.
 
 ### 5.3 Kommunikationsmodell
 
+Die EMC Mitgliederverwaltung folgt einem klassischen mehrschichtigen Kommunikationsmodell.
+
+Der Browser kommuniziert ausschließlich mit dem jeweiligen Frontend.
+
+Die Frontends kommunizieren intern mit dem zugehörigen Backend.
+
+Die Backends greifen auf die zentrale MariaDB-Instanz zu.
+
+---
+
 #### DEV
 
 Kommunikationsfluss:
 
 ```mermaid
 graph LR
-    Browser --> FrontendDEV["Frontend DEV"]
-    FrontendDEV --> BackendDEV["Backend DEV"]
-    BackendDEV --> MariaDB["MariaDB"]
+    Browser --> FrontendDEV[Frontend DEV]
+    FrontendDEV --> BackendDEV[Backend DEV]
+    BackendDEV --> MariaDB[MariaDB]
 ```
+
+Zweck:
+
+- Entwicklung
+- Tests
+- technische Validierung
+- Vorstufe für produktive Releases
 
 ---
 
@@ -394,10 +454,27 @@ Kommunikationsfluss:
 
 ```mermaid
 graph LR
-    Browser --> FrontendPROD["Frontend PROD"]
-    FrontendPROD --> BackendPROD["Backend PROD"]
-    BackendPROD --> MariaDB["MariaDB"]
+    Browser --> FrontendPROD[Frontend PROD]
+    FrontendPROD --> BackendPROD[Backend PROD]
+    BackendPROD --> MariaDB[MariaDB]
 ```
+
+Zweck:
+
+- produktivnaher Pilotbetrieb
+- operative Nutzung
+
+---
+
+#### Architekturprinzip
+
+Kommunikationsgrundsätze:
+
+- kein direkter Browserzugriff auf das Backend
+- keine direkte Frontend-Datenbankkommunikation
+- Trennung von UI, Geschäftslogik und Datenhaltung
+- DEV und PROD logisch getrennte Kommunikationspfade
+- gemeinsame Nutzung der zentralen MariaDB-Infrastruktur
 
 ---
 
@@ -439,17 +516,32 @@ Architekturprinzipien:
 
 - Backend nicht direkt extern exponieren
 - interne Containerkommunikation über Docker-Netzwerke
-- funktionale Netztrennung
-- Monitoring separat
-- Datenbankinfrastruktur separat
+- funktionale Netzwerksegmentierung
+- klare Trennung von Anwendungs- und Infrastrukturkommunikation
+- kontrollierte Erreichbarkeit von Verwaltungsdiensten
+
+Ziel:
+
+- reduzierte Angriffsfläche
+- klare Kommunikationsbeziehungen
+- bessere Nachvollziehbarkeit der Infrastruktur
+- vereinfachte Betriebsadministration
 
 ---
 
 ## 6. Konfigurationsmanagement
 
-Die Anwendung nutzt komponentenspezifische Konfiguration.
+Die EMC Mitgliederverwaltung verwendet komponentenspezifische Konfiguration.
 
-Die Konfiguration ist abhängig von Umgebung und Komponente.
+Die Konfiguration erfolgt container- und stackbasiert.
+
+Die zentrale Verwaltungsoberfläche für die Konfiguration ist:
+
+```text
+Portainer
+```
+
+Konfigurationsänderungen erfolgen abhängig von Komponente und Betriebszweck.
 
 ---
 
@@ -457,61 +549,77 @@ Die Konfiguration ist abhängig von Umgebung und Komponente.
 
 Das Frontend wird als statischer React Build über nginx ausgeliefert.
 
-Konfigurationsbestandteile:
+Konfigurationsorte:
 
-- nginx Konfiguration
-- API Reverse Proxy Routing
-- React Build Artefakte
+- Frontend Docker Image
+- nginx Konfiguration innerhalb des Containers
+- Portainer Stack Definition
 
-Aktuelle Proxy-Konfiguration:
+Zentrale technische Konfiguration:
 
 ```text
-location /api/
-proxy_pass -> Backend
+/etc/nginx/conf.d/default.conf
 ```
+
+Aufgaben der Frontend-Konfiguration:
+
+- Auslieferung der React SPA
+- React Router Fallback Routing
+- Reverse Proxy für API Requests
+
+Aktuelle Proxy-Konfiguration:
 
 DEV:
 
 ```text
-emc-mitglieder-backend-dev:8080
+proxy_pass http://emc-mitglieder-backend-dev:8080
 ```
 
 PROD:
 
 ```text
-emc-mitglieder-backend-prod:8080
+proxy_pass http://emc-mitglieder-backend-prod:8080
 ```
 
 Zweck:
 
 - gleiche Browser-Origin
-- Backend nicht direkt veröffentlichen
-- vereinfachte Sessionkommunikation
+- Sessionbasierte Authentifizierung
+- keine direkte Backend-Exponierung
+- saubere DEV/PROD Trennung
 
 ---
 
 ### 6.2 Backend Konfiguration
 
-Das Backend wird containerisiert betrieben.
+Das Backend wird als Spring Boot Container betrieben.
+
+Konfigurationsorte:
+
+- Spring Boot Konfiguration
+- Container Environment Variablen
+- Portainer Stack Definition
 
 Typische Konfigurationsbereiche:
 
 - Datenbankverbindung
 - Spring Profile
+- Logging
 - Sicherheitskonfiguration
 - Session-Verhalten
-- Logging
 
-Umgebungsspezifisch:
+Umgebungen:
 
 - DEV
 - PROD
+
+Betriebsrelevante Änderungen erfolgen primär über die Stack-Konfiguration.
 
 ---
 
 ### 6.3 Datenbank Konfiguration
 
-MariaDB dient als zentrale Datenhaltung.
+MariaDB dient als zentrale Datenplattform.
 
 Aktuelle Datenbanken:
 
@@ -524,6 +632,21 @@ Zusätzlich vorhanden:
 
 - emc_finanzen
 - emc_finanzen_dev
+
+Konfigurationsbereiche:
+
+- Datenbanken
+- Benutzer
+- Berechtigungen
+- Netzwerkzugriff
+
+Verwaltung über:
+
+```text
+phpMyAdmin
+```
+
+oder technische Direktzugriffe.
 
 ---
 
@@ -541,11 +664,17 @@ Container:
 mariadb-backup
 ```
 
-Aktuelle Konfiguration:
+Konfigurationsort:
+
+Portainer Stack Definition
+
+Aktuelle Parameter:
 
 | Parameter | Wert |
 |---------|------|
-| Backup Zeit | täglich 03:00 |
+| MYSQL_HOST | mariadb |
+| MYSQL_PORT | 3306 |
+| Zeitplan | täglich 03:00 |
 | Initial Backup | aktiviert |
 | Retention | 14 Backups |
 | Kompression | gzip Level 6 |
@@ -573,15 +702,41 @@ Die technische Betriebsstrategie basiert auf:
 Portainer Stacks
 ```
 
-Stacks dienen zur Verwaltung von:
+Stacks verwalten:
 
 - Frontend DEV
 - Backend DEV
 - Frontend PROD
 - Backend PROD
-- Infrastrukturservices
+- MariaDB Infrastruktur
+- Backup Infrastruktur
+- Monitoring
 
-Docker CLI bleibt als Diagnose- und Recovery-Werkzeug verfügbar.
+Stack-Konfiguration umfasst typischerweise:
+
+- Images
+- Ports
+- Netzwerke
+- Volumes
+- Environment Variablen
+- Restart Policies
+
+Konfigurationsänderungen erfolgen bevorzugt über Portainer.
+
+---
+
+### 6.6 Konfigurationsgrundsätze
+
+Betriebsgrundsätze:
+
+- DEV und PROD strikt getrennt konfigurieren
+- Konfigurationsänderungen kontrolliert durchführen
+- Änderungen nach Umsetzung prüfen
+- Stack-basierte Konfiguration bevorzugen
+- direkte Containermanipulation vermeiden
+
+> [!NOTE]
+> Konfigurationsänderungen an laufenden Containern ohne Stack-Anpassung sind nicht dauerhaft und gehen beim Redeployment verloren.
 
 ---
 
@@ -594,6 +749,10 @@ Release- und Update-Prozesse werden separat im Deployment-Handbuch beschrieben.
 ---
 
 ### 7.1 Installationsprinzip
+
+Die aktuelle Betriebsumgebung ist historisch gewachsen.
+
+Die folgende Reihenfolge beschreibt eine technisch sinnvolle logische Erstinstallation, nicht zwingend den historisch realen Aufbau.
 
 Installationsreihenfolge:
 
@@ -791,7 +950,7 @@ Die primäre Verwaltungsoberfläche ist:
 Portainer
 ```
 
-Docker CLI dient ergänzend für Diagnose und Recovery.
+Docker CLI dient ergänzend für Diagnose, Spezialfälle und Recovery.
 
 ---
 
@@ -800,16 +959,19 @@ Docker CLI dient ergänzend für Diagnose und Recovery.
 Regelmäßige Statuskontrolle umfasst:
 
 - Containerstatus
+- Stackstatus
 - Erreichbarkeit der Webanwendung
 - Monitoring Status
 - Backup Status
 
 Portainer:
 
-- Stack Status
+- Stack Übersicht
 - Container Status
 - Neustarts
 - Logs
+- Netzwerke
+- Volumes
 
 Docker CLI:
 
@@ -821,7 +983,7 @@ Zweck:
 
 - laufende Container prüfen
 - Portfreigaben prüfen
-- Neustarts erkennen
+- unerwartete Neustarts erkennen
 
 ---
 
@@ -854,6 +1016,8 @@ oder:
 docker compose up -d
 ```
 
+CLI-Befehle dienen primär Diagnose- oder Spezialfällen außerhalb der regulären Stack-Verwaltung.
+
 ---
 
 ### 8.3 Stop von Diensten
@@ -876,6 +1040,8 @@ oder:
 ```bash
 docker compose down
 ```
+
+CLI-Befehle dienen primär Diagnose- oder Spezialfällen außerhalb der regulären Stack-Verwaltung.
 
 ---
 
@@ -902,7 +1068,41 @@ docker restart <container>
 
 ---
 
-### 8.5 Logprüfung
+### 8.5 Redeployment
+
+Da die Betriebsarchitektur stackbasiert organisiert ist, erfolgen Konfigurationsänderungen bevorzugt über Redeployment.
+
+Typische Anwendungsfälle:
+
+- Image Updates
+- Environment Variablen Änderungen
+- Portänderungen
+- Netzwerkänderungen
+- Volume Anpassungen
+- Containerdefinitionen ändern
+
+Portainer Vorgehen:
+
+1. Stack öffnen
+2. Konfiguration prüfen oder anpassen
+3. Redeploy ausführen
+4. Containerstatus prüfen
+5. Funktionstest durchführen
+
+Nach Redeployment prüfen:
+
+- Container laufen
+- Frontend erreichbar
+- Login funktioniert
+- API erreichbar
+- Monitoring grün
+
+> [!NOTE]
+> Änderungen direkt innerhalb laufender Container sind nicht dauerhaft und gehen beim Redeployment verloren.
+
+---
+
+### 8.6 Logprüfung
 
 Logs sind zentrale Diagnosequelle.
 
@@ -934,7 +1134,7 @@ Typische Kandidaten:
 
 ---
 
-### 8.6 Betriebsprüfung Frontend
+### 8.7 Betriebsprüfung Frontend
 
 Prüfen:
 
@@ -959,7 +1159,7 @@ http://<NAS-IP>:9082
 
 ---
 
-### 8.7 Betriebsprüfung Backend
+### 8.8 Betriebsprüfung Backend
 
 Backend ist nicht direkt extern veröffentlicht.
 
@@ -979,7 +1179,7 @@ ohne Authentifizierung.
 
 ---
 
-### 8.8 Datenbankbetrieb
+### 8.9 Datenbankbetrieb
 
 Regelmäßig prüfen:
 
@@ -996,7 +1196,7 @@ Port:
 
 ---
 
-### 8.9 Portainer Betrieb
+### 8.10 Portainer Betrieb
 
 Portainer dient als zentrale Betriebsoberfläche.
 
@@ -1007,6 +1207,8 @@ Funktionen:
 - Logs
 - Neustarts
 - Redeployments
+- Netzwerkübersicht
+- Volume Übersicht
 
 Aktueller Zugriff:
 
@@ -1097,7 +1299,26 @@ Ziele:
 
 ---
 
-### 9.5 Benachrichtigungen
+### 9.5 Monitoring Grenzen
+
+Monitoring prüft primär:
+
+- Dienstverfügbarkeit
+- Erreichbarkeit
+- grundlegende Betriebsbereitschaft
+
+Monitoring prüft nicht automatisch:
+
+- fachliche Korrektheit
+- Datenintegrität
+- erfolgreiche inhaltliche Backup-Wiederherstellbarkeit
+
+> [!WARNING]
+> Ein laufender Dienst bedeutet nicht automatisch einen fachlich korrekten Systemzustand.
+
+---
+
+### 9.6 Benachrichtigungen
 
 Benachrichtigung erfolgt via:
 
@@ -1113,13 +1334,13 @@ Zweck:
 
 ---
 
-### 9.6 Monitoring Routine
+### 9.7 Monitoring Routine
 
 Empfohlene regelmäßige Prüfung:
 
 - Uptime Kuma Dashboard
-- Fehlgeschlagene Checks
-- Neustarts
+- fehlgeschlagene Checks
+- unerwartete Neustarts
 - Telegram Alerts
 - Erreichbarkeit Frontend
 
@@ -1185,6 +1406,8 @@ Aktueller Backup Speicher:
 ```text
 /volume1/home/JaitiNissi1968/docker/backups/mariadb
 ```
+
+Dieser Pfad ist installationsabhängig.
 
 Anforderungen:
 
@@ -1277,3 +1500,460 @@ Restore-Prozesse werden detailliert im Troubleshooting-/Recovery-Handbuch beschr
 
 ---
 
+## 11. Benutzer- und Administrationszugänge
+
+Dieses Kapitel beschreibt technische und administrative Zugänge zum Betriebssystem.
+
+Die fachliche Benutzerverwaltung der Anwendung selbst wird separat im Benutzerhandbuch beschrieben.
+
+---
+
+### 11.1 NAS Administration
+
+Zentraler technischer Zugang:
+
+```text
+UGREEN DH2300 NAS
+```
+
+Typische Verwaltungsaufgaben:
+
+- Hostverwaltung
+- Speicherverwaltung
+- Netzwerkverwaltung
+- Benutzerverwaltung
+- Plattformüberwachung
+
+Zugang:
+
+- NAS Webadministration
+- SSH Zugriff
+
+---
+
+### 11.2 Portainer Administration
+
+Portainer ist die primäre technische Betriebsoberfläche.
+
+Aktueller Zugriff:
+
+```text
+http://<NAS-IP>:9000
+```
+
+Funktionen:
+
+- Stack Verwaltung
+- Container Neustarts
+- Redeployments
+- Logs
+- Statuskontrolle
+- Netzwerkübersicht
+- Volumes
+
+Zielgruppe:
+
+- technische Betreiber
+- Administratoren
+
+---
+
+### 11.3 Datenbankadministration
+
+Datenbankadministration erfolgt über:
+
+```text
+phpMyAdmin
+```
+
+Aktueller Zugriff:
+
+```text
+http://<NAS-IP>:8080
+```
+
+Typische Aufgaben:
+
+- Read-Only Prüfungen bevorzugt
+- Datenprüfung
+- SQL Abfragen
+- technische Analyse
+- Tabellenprüfung
+- Strukturkontrolle
+
+> [!WARNING]
+> Direkte produktive Datenänderungen sollten ausschließlich im Ausnahmefall und mit technischer Sorgfalt erfolgen.
+
+---
+
+### 11.4 MariaDB Direktzugriff
+
+Technischer Direktzugriff möglich über:
+
+```text
+Port 3306
+```
+
+Aktueller Zweck:
+
+- Microsoft Access ODBC Übergangsarchitektur
+- technische Administration
+- Spezialfälle
+
+> [!WARNING]
+> Direkter Datenbankzugriff umgeht Anwendungslogik, Validierung und Berechtigungsregeln.
+
+---
+
+### 11.5 Anwendungsadministration
+
+Innerhalb der EMC Anwendung existiert eine fachliche Benutzerverwaltung.
+
+Administrierbar:
+
+- Benutzer anlegen
+- Rollen ändern
+- aktiv/inaktiv setzen
+- Passwort setzen
+
+Rollen:
+
+- ADMIN
+- EDITOR
+- VIEWER
+
+---
+
+## 12. Sicherheitsrahmen
+
+Dieses Kapitel beschreibt den aktuellen operativen Sicherheitsrahmen.
+
+Die technische Sicherheitsarchitektur wird detailliert in:
+
+```text
+04-architektur.md
+```
+
+beschrieben.
+
+---
+
+### 12.1 Zugriffsmodell
+
+Aktueller Zugriff:
+
+- internes Netzwerk
+- VPN-basierter Fernzugriff
+
+Die Anwendung ist derzeit nicht für offenen Internetbetrieb ausgelegt.
+
+---
+
+### 12.2 Authentifizierung
+
+Authentifizierung erfolgt über:
+
+```text
+Spring Security Sessions
+```
+
+Merkmale:
+
+- serverseitige Sessionverwaltung
+- HttpOnly Session Cookie
+- Session Restore
+- serverseitige Autorisierung
+
+---
+
+### 12.3 Rollenmodell
+
+Verwendete Rollen:
+
+- ADMIN
+- EDITOR
+- VIEWER
+
+Prinzip:
+
+Minimal notwendige Rechtevergabe.
+
+---
+
+### 12.4 Backend Exponierung
+
+Die Spring Boot Backends sind nicht direkt extern veröffentlicht.
+
+Zugriff erfolgt ausschließlich indirekt über:
+
+```text
+nginx Frontend Reverse Proxy
+```
+
+Dies reduziert die externe Angriffsfläche.
+
+---
+
+### 12.5 Datenbankzugriff
+
+MariaDB ist aktuell im internen Netz erreichbar.
+
+Port:
+
+```text
+3306
+```
+
+Begründung:
+
+- Access Übergangsarchitektur
+- ODBC Altprozesse
+- technische Administration
+
+Risiko:
+
+Direkter DB Zugriff umgeht:
+
+- Validierung
+- Berechtigungslogik
+- Geschäftsregeln
+
+---
+
+### 12.6 CSRF Status
+
+Aktueller Status:
+
+```text
+deaktiviert
+```
+
+Dies ist im aktuellen Pilotbetrieb bewusst akzeptiert.
+
+Begründung:
+
+- interne Nutzung
+- VPN Zugriff
+- begrenzter Benutzerkreis
+
+> [!WARNING]
+> Bei echtem Internetbetrieb ist eine Neubewertung erforderlich.
+
+---
+
+### 12.7 Monitoring als Sicherheitsaspekt
+
+Monitoring unterstützt Sicherheits- und Betriebsstabilität.
+
+Überwachung:
+
+- Erreichbarkeit
+- Ausfälle
+- unerwartete Neustarts
+
+Benachrichtigung:
+
+```text
+Telegram Alerts
+```
+
+---
+
+## 13. Wartung
+
+Dieses Kapitel beschreibt regelmäßige technische Wartungsaufgaben.
+
+---
+
+### 13.1 Regelmäßige Kontrollen
+
+Empfohlen:
+
+täglich / regelmäßig:
+
+- Uptime Kuma Status prüfen
+- Containerstatus prüfen
+- Backupprüfung
+- freie Speicherressourcen prüfen
+- Telegram Alerts prüfen
+
+---
+
+### 13.2 Container Wartung
+
+Typische Aufgaben:
+
+- Neustarts
+- Image Updates
+- Stack Redeployments
+- Logkontrolle
+
+Primär via:
+
+```text
+Portainer
+```
+
+---
+
+### 13.3 Docker Image Bereinigung
+
+Langfristig entstehen durch Redeployments und Updates alte Docker Images.
+
+Regelmäßig prüfen:
+
+- nicht mehr verwendete Images
+- dangling images
+- unnötiger Speicherverbrauch
+
+Typische CLI Prüfung:
+
+```bash
+docker image ls
+```
+
+Bereinigung bei Bedarf:
+
+```bash
+docker image prune
+```
+
+oder kontrolliert manuell via Portainer.
+
+> [!NOTE]
+> Image Bereinigung sollte bewusst erfolgen, um benötigte Rollback-Stände nicht unbeabsichtigt zu entfernen.
+
+---
+
+### 13.4 Datenbank Wartung
+
+Typische Aufgaben:
+
+- DB Verfügbarkeit prüfen
+- Tabellenzustand prüfen
+- Backupkontrolle
+- Speicherplatzprüfung
+
+Werkzeuge:
+
+- phpMyAdmin
+- Docker Logs
+- MariaDB Direktzugriff
+
+---
+
+### 13.5 Backup Wartung
+
+Regelmäßig prüfen:
+
+- aktuelle Backups vorhanden
+- Rotation funktioniert
+- Speicherplatz ausreichend
+- Backup Container läuft
+
+---
+
+### 13.6 Benutzerpflege
+
+Regelmäßige fachliche Aufgaben:
+
+- Benutzerkonten pflegen
+- Rollen prüfen
+- inaktive Benutzer deaktivieren
+- Passwortpflege
+
+---
+
+### 13.7 Wartung nach Änderungen
+
+Nach technischen Änderungen prüfen:
+
+- Containerstatus
+- Login
+- Frontend Erreichbarkeit
+- Backend Verhalten
+- Monitoring
+- Backup Status
+
+---
+
+## 14. Betriebsgrenzen und aktueller Status
+
+Dieses Kapitel dokumentiert bewusst die aktuelle Realität des Systems.
+
+---
+
+### 14.1 Pilotbetriebsstatus
+
+Aktueller Status:
+
+- produktivnaher Pilotbetrieb
+- technische DEV/PROD Trennung vorhanden
+- reale operative Nutzung vorhanden
+
+---
+
+### 14.2 Mehrbenutzerstatus
+
+Aktuell:
+
+- faktisch Einzelanwenderbetrieb
+
+Perspektivisch:
+
+- Mehrbenutzerbetrieb
+
+---
+
+### 14.3 Access Übergangsarchitektur
+
+Microsoft Access ist noch nicht vollständig abgelöst.
+
+Aktuell verbleiben:
+
+- ODBC-basierte Altprozesse
+- Berichtswesen / Auswertungen
+- direkte Datenbankzugriffe
+
+Die Web-Anwendung ersetzt schrittweise die operative Pflege.
+
+---
+
+### 14.4 Internetbetrieb
+
+Aktueller Status:
+
+kein echter offener Internetbetrieb
+
+Geplante Entwicklung:
+
+- Domain Zugriff
+- DynDNS
+- Reverse Proxy
+- HTTPS/TLS
+
+---
+
+### 14.5 Betriebsreife
+
+Aktueller Reifegrad:
+
+MVP / produktivnaher Pilotbetrieb
+
+Konsequenzen:
+
+- pragmatische Architekturentscheidungen
+- bewusst akzeptierte Übergangsstrukturen
+- schrittweise Professionalisierung
+
+---
+
+### 14.6 Technische Weiterentwicklung
+
+Geplante Weiterentwicklung:
+
+- Security Härtung
+- Internetzugriff
+- verbesserte Recovery Prozesse
+- professioneller Mehrbenutzerbetrieb
+- vollständige Access Ablösung
