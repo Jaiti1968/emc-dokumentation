@@ -19,12 +19,20 @@
     - [3.3 Backend Struktur](#33-backend-struktur)
     - [3.4 Windows Entwicklungsmodell](#34-windows-entwicklungsmodell)
     - [3.5 Wichtiger Pfad-Hinweis](#35-wichtiger-pfad-hinweis)
-    - [3.6 Keine Container-Manipulation](#36-keine-container-manipulation)
+    - [3.6 Rechtevoraussetzungen](#36-rechtevoraussetzungen)
+    - [3.7 Keine Container-Manipulation](#37-keine-container-manipulation)
   - [4. Frontend Deployment](#4-frontend-deployment)
     - [4.1 Übersicht](#41-übersicht)
     - [4.2 Lokaler Build](#42-lokaler-build)
     - [4.3 Zielpfade](#43-zielpfade)
     - [4.4 Transfer auf NAS](#44-transfer-auf-nas)
+      - [Vorheriges Frontend-Artefakt prüfen](#vorheriges-frontend-artefakt-prüfen)
+      - [Vorheriges Frontend-Artefakt archivieren](#vorheriges-frontend-artefakt-archivieren)
+      - [Zielverzeichnis bereinigen](#zielverzeichnis-bereinigen)
+      - [Neues Frontend-Artefakt übertragen](#neues-frontend-artefakt-übertragen)
+      - [Rechte korrigieren](#rechte-korrigieren)
+      - [Übertragung prüfen](#übertragung-prüfen)
+      - [Container aktualisieren](#container-aktualisieren)
     - [4.5 Portainer Deployment](#45-portainer-deployment)
     - [4.6 Frontend Smoke Test](#46-frontend-smoke-test)
     - [4.7 Typische Frontend Fehler](#47-typische-frontend-fehler)
@@ -37,6 +45,11 @@
     - [5.3 Zielpfade](#53-zielpfade)
     - [5.4 Dockerfile Standard](#54-dockerfile-standard)
     - [5.5 Transfer auf NAS](#55-transfer-auf-nas)
+      - [Vorheriges Artefakt prüfen](#vorheriges-artefakt-prüfen)
+      - [Vorheriges Artefakt archivieren](#vorheriges-artefakt-archivieren)
+      - [Build-Verzeichnis bereinigen](#build-verzeichnis-bereinigen)
+      - [Neues Artefakt übertragen](#neues-artefakt-übertragen)
+      - [Docker Build Bezug](#docker-build-bezug)
     - [5.6 Docker Build](#56-docker-build)
     - [5.7 Portainer Deployment](#57-portainer-deployment)
     - [5.8 Backend Smoke Test](#58-backend-smoke-test)
@@ -325,7 +338,55 @@ GUI sichtbarer Pfad ≠ Docker Bind Mount Pfad
 
 ---
 
-### 3.6 Keine Container-Manipulation
+### 3.6 Rechtevoraussetzungen
+
+Der operative Deployment-Benutzer benötigt Schreibrechte auf die NAS Build-Verzeichnisse.
+
+Insbesondere:
+
+```text
+/volume1/docker/build
+```
+
+Typische Symptome bei fehlenden Rechten:
+
+```text
+Permission denied
+```
+
+Beispiel:
+
+```bash
+mkdir: cannot create directory ... Permission denied
+```
+
+Prüfung:
+
+```bash
+ls -ld /volume1/docker/build
+```
+
+Beispiel korrekter Benutzerrechte:
+
+```text
+drwxr-xr-x JaitiNissi1968 users /volume1/docker/build
+```
+
+Typische Einrichtung:
+
+```bash
+sudo chown -R JaitiNissi1968:users /volume1/docker/build
+```
+
+Ziel:
+
+- Deployments ohne root-Sonderwege
+- konsistente Schreibrechte
+- reproduzierbarer operativer Ablauf
+
+---
+
+### 3.7 Keine Container-Manipulation
 
 Nicht zulässig:
 
@@ -431,23 +492,119 @@ PROD:
 
 ### 4.4 Transfer auf NAS
 
-Lokale Build-Artefakte werden kontrolliert auf das NAS übertragen.
+Lokale Frontend Build-Artefakte werden kontrolliert auf das NAS übertragen.
 
-Prinzip:
+Nach lokalem Build:
 
-bestehendes `dist` vollständig ersetzen.
+```bash
+npm run build
+```
+
+entsteht lokal:
+
+```text
+dist/
+```
+
+Dieses Verzeichnis wird vollständig auf das NAS übertragen.
+
+DEV Ziel:
+
+```text
+/volume1/docker/build/mitglieder-frontend-dev/dist
+```
+
+PROD Ziel:
+
+```text
+/volume1/docker/build/mitglieder-frontend-prod/dist
+```
+
+---
+
+#### Vorheriges Frontend-Artefakt prüfen
+
+DEV:
+
+```bash
+ls -lh /volume1/docker/build/mitglieder-frontend-dev
+```
+
+PROD:
+
+```bash
+ls -lh /volume1/docker/build/mitglieder-frontend-prod
+```
+
+---
+
+#### Vorheriges Frontend-Artefakt archivieren
+
+Archivverzeichnis sicherstellen:
+
+```bash
+mkdir -p /volume1/docker/build/archive/frontend
+```
+
+Zeitstempel erzeugen:
+
+```bash
+TIMESTAMP=$(date +%Y-%m-%d_%H-%M)
+```
 
 Wichtig:
 
-Nicht einzelne Dateien manuell austauschen.
+Das bestehende `dist` Verzeichnis darf bei laufendem Container **nicht per `mv` verschoben** werden.
 
-Empfohlenes Vorgehen:
+Grund:
 
-1. lokales Build erzeugen
-2. bestehendes Zielverzeichnis leeren
-3. vollständiges neues `dist` übertragen
+Der nginx Container verwendet einen Bind Mount auf dieses Verzeichnis.
 
-Vorher optional Zielverzeichnis leeren:
+Ein Verschieben würde dazu führen, dass der laufende Container weiterhin auf das alte Verzeichnis zeigt.
+
+Deshalb vollständige Kopie erstellen.
+
+DEV:
+
+```bash
+if [ -d /volume1/docker/build/mitglieder-frontend-dev/dist ]; then
+  cp -a /volume1/docker/build/mitglieder-frontend-dev/dist \
+        /volume1/docker/build/archive/frontend/dist-dev-${TIMESTAMP}
+fi
+```
+
+PROD:
+
+```bash
+if [ -d /volume1/docker/build/mitglieder-frontend-prod/dist ]; then
+  cp -a /volume1/docker/build/mitglieder-frontend-prod/dist \
+        /volume1/docker/build/archive/frontend/dist-prod-${TIMESTAMP}
+fi
+```
+
+Beispiel:
+
+```text
+dist
+```
+
+wird archiviert als:
+
+```text
+dist-dev-2026-05-23_20-15
+```
+
+Ziel:
+
+- vollständige Frontend-Historie
+- Rollback-Möglichkeit
+- kein Bind-Mount-Problem
+
+---
+
+#### Zielverzeichnis bereinigen
+
+Nach erfolgreicher Archivierung Inhalte des bestehenden `dist` Verzeichnisses entfernen.
 
 DEV:
 
@@ -461,22 +618,122 @@ PROD:
 rm -rf /volume1/docker/build/mitglieder-frontend-prod/dist/*
 ```
 
+Kontrolle:
+
+DEV:
+
+```bash
+ls -lh /volume1/docker/build/mitglieder-frontend-dev/dist
+```
+
+PROD:
+
+```bash
+ls -lh /volume1/docker/build/mitglieder-frontend-prod/dist
+```
+
+Das `dist` Verzeichnis selbst bleibt bestehen.
+
+Nur dessen Inhalt wird ersetzt.
+
+---
+
+#### Neues Frontend-Artefakt übertragen
+
 Beispiel via SCP (Windows PowerShell):
 
 DEV:
 
 ```powershell
-scp -r dist JaitiNissi1968@NAS-DH2300-C64C:/volume1/docker/build/mitglieder-frontend-dev/
+scp -r dist/* JaitiNissi1968@NAS-DH2300-C64C:/volume1/docker/build/mitglieder-frontend-dev/dist/
 ```
 
 PROD:
 
 ```powershell
-scp -r dist JaitiNissi1968@NAS-DH2300-C64C:/volume1/docker/build/mitglieder-frontend-prod/
+scp -r dist/* JaitiNissi1968@NAS-DH2300-C64C:/volume1/docker/build/mitglieder-frontend-prod/dist/
 ```
 
+---
+
+#### Rechte korrigieren
+
+Nach SCP Transfer Verzeichnisrechte korrigieren.
+
+Grund:
+
+Lokale Windows/SCP Rechte können dazu führen, dass nginx keinen Zugriff auf das Frontend erhält.
+
+Typischer Fehler:
+
+```text
+500 Internal Server Error
+Permission denied
+stat() "/usr/share/nginx/html/index.html"
+```
+
+Korrektur:
+
+DEV:
+
+```bash
+chmod -R 755 /volume1/docker/build/mitglieder-frontend-dev/dist
+```
+
+PROD:
+
+```bash
+chmod -R 755 /volume1/docker/build/mitglieder-frontend-prod/dist
+```
+
+---
+
+#### Übertragung prüfen
+
+DEV:
+
+```bash
+ls -lh /volume1/docker/build/mitglieder-frontend-dev/dist
+```
+
+PROD:
+
+```bash
+ls -lh /volume1/docker/build/mitglieder-frontend-prod/dist
+```
+
+Erwartet:
+
+```text
+assets/
+index.html
+favicon.svg
+icons.svg
+```
+
+---
+
+#### Container aktualisieren
+
+Frontend Container neu deployen.
+
+Portainer:
+
+```text
+Frontend DEV / PROD Stack
+→ Redeploy
+```
+
+---
+
 > [!WARNING]
-> Frontend-Artefakte immer vollständig ersetzen, keine selektiven Einzeldateien übertragen.
+> Frontend-Artefakte immer vollständig ersetzen.
+
+Nicht zulässig:
+
+- selektive Einzeldateien austauschen
+- dist per `mv` bei laufendem Container verschieben
+- Rechteprobleme ignorieren
 
 ---
 
@@ -685,25 +942,131 @@ ENTRYPOINT ["java", "-jar", "/app/app.jar"]
 
 Nach lokalem Maven Build:
 
-JAR in passendes Zielverzeichnis kopieren.
+```bash
+mvn clean package
+```
 
-DEV:
+wird das erzeugte Backend-Artefakt auf das NAS übertragen.
+
+DEV Ziel:
 
 ```text
 /volume1/docker/build/mitglieder-backend-dev/target
 ```
 
-PROD:
+PROD Ziel:
 
 ```text
 /volume1/docker/build/mitglieder-backend-prod/target
 ```
 
-Wichtig:
+---
+
+#### Vorheriges Artefakt prüfen
+
+DEV:
+
+```bash
+ls -lh /volume1/docker/build/mitglieder-backend-dev/target
+```
+
+PROD:
+
+```bash
+ls -lh /volume1/docker/build/mitglieder-backend-prod/target
+```
+
+---
+
+#### Vorheriges Artefakt archivieren
+
+Archivverzeichnis sicherstellen:
+
+```bash
+mkdir -p /volume1/docker/build/archive/backend
+```
+
+Zeitstempel erzeugen:
+
+```bash
+TIMESTAMP=$(date +%Y-%m-%d_%H-%M)
+```
+
+DEV:
+
+```bash
+for f in /volume1/docker/build/mitglieder-backend-dev/target/*.jar; do
+  [ -e "$f" ] || continue
+  BASENAME=$(basename "$f" .jar)
+  mv "$f" "/volume1/docker/build/archive/backend/${BASENAME}-${TIMESTAMP}.jar"
+done
+```
+
+PROD:
+
+```bash
+for f in /volume1/docker/build/mitglieder-backend-prod/target/*.jar; do
+  [ -e "$f" ] || continue
+  BASENAME=$(basename "$f" .jar)
+  mv "$f" "/volume1/docker/build/archive/backend/${BASENAME}-${TIMESTAMP}.jar"
+done
+```
+
+Beispiel:
+
+```text
+mitglieder-backend-1.1.1-SNAPSHOT.jar
+```
+
+wird zu:
+
+```text
+mitglieder-backend-1.1.1-SNAPSHOT-2026-05-22_21-45.jar
+```
+
+Ziel:
+
+- nachvollziehbare Deployment-Historie
+- Rollback-Möglichkeit
+- keine Verwechslungsgefahr
+
+---
+
+#### Build-Verzeichnis bereinigen
+
+Nach erfolgreicher Archivierung sicherstellen, dass kein Altartefakt mehr vorhanden ist.
+
+DEV:
+
+```bash
+rm -f /volume1/docker/build/mitglieder-backend-dev/target/*.jar
+```
+
+PROD:
+
+```bash
+rm -f /volume1/docker/build/mitglieder-backend-prod/target/*.jar
+```
+
+Kontrolle:
+
+DEV:
+
+```bash
+ls -lh /volume1/docker/build/mitglieder-backend-dev/target
+```
+
+PROD:
+
+```bash
+ls -lh /volume1/docker/build/mitglieder-backend-prod/target
+```
 
 Im target-Verzeichnis darf nur das aktuell zu deployende Backend-Artefakt liegen.
 
-Vor dem Kopieren ältere JAR-Dateien entfernen.
+---
+
+#### Neues Artefakt übertragen
 
 Beispiel via SCP (Windows PowerShell):
 
@@ -719,19 +1082,23 @@ PROD:
 scp target/mitglieder-backend-*.jar JaitiNissi1968@NAS-DH2300-C64C:/volume1/docker/build/mitglieder-backend-prod/target/
 ```
 
-Vorher alte Artefakte entfernen:
+Kontrolle:
 
 DEV:
 
 ```bash
-rm -f /volume1/docker/build/mitglieder-backend-dev/target/*.jar
+ls -lh /volume1/docker/build/mitglieder-backend-dev/target
 ```
 
 PROD:
 
 ```bash
-rm -f /volume1/docker/build/mitglieder-backend-prod/target/*.jar
+ls -lh /volume1/docker/build/mitglieder-backend-prod/target
 ```
+
+---
+
+#### Docker Build Bezug
 
 Der Docker Build verwendet:
 
@@ -746,7 +1113,7 @@ mitglieder-backend-1.1.1-SNAPSHOT.jar
 mitglieder-backend-1.1.2-SNAPSHOT.jar
 ```
 
-unproblematisch, solange nur eine gültige JAR im target-Verzeichnis vorhanden ist.
+problemlos, solange sich genau **eine gültige JAR-Datei** im target-Verzeichnis befindet.
 
 ---
 
