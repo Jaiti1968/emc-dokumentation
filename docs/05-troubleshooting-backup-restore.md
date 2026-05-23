@@ -39,6 +39,7 @@
     - [5.6 Permission denied](#56-permission-denied)
     - [5.7 Monitoring funktioniert nicht](#57-monitoring-funktioniert-nicht)
     - [5.8 Externer Zugriff nicht möglich](#58-externer-zugriff-nicht-möglich)
+    - [5.9 Versionsabweichung / falscher Build](#59-versionsabweichung--falscher-build)
   - [6. Backup-Strategie](#6-backup-strategie)
     - [6.1 Standard Backup](#61-standard-backup)
     - [6.2 Backup Ziel](#62-backup-ziel)
@@ -100,12 +101,12 @@ Ziel ist ein reproduzierbares technisches Runbook für den operativen Betrieb.
 
 Nicht Bestandteil dieses Dokuments:
 
-| Thema | Dokument |
-|------|----------|
+| Thema                  | Dokument                     |
+| ---------------------- | ---------------------------- |
 | Installation / Betrieb | `01-installation-betrieb.md` |
-| Deployment | `02-deployment.md` |
-| Benutzerbedienung | `03-benutzerhandbuch.md` |
-| Architektur | `04-architektur.md` |
+| Deployment             | `02-deployment.md`           |
+| Benutzerbedienung      | `03-benutzerhandbuch.md`     |
+| Architektur            | `04-architektur.md`          |
 
 ---
 
@@ -812,6 +813,72 @@ Typische Ursachen:
 Abgrenzung:
 
 Wenn Dienste intern auf dem NAS laufen, aber extern nicht erreichbar sind, liegt die Ursache häufig nicht bei Docker oder der Anwendung, sondern beim VPN-Zugriff.
+
+---
+
+### 5.9 Versionsabweichung / falscher Build
+
+Typische Symptome:
+
+- erwartete Änderung nicht sichtbar
+- Frontend verhält sich wie alte Version
+- Backend liefert unerwartetes Verhalten
+- Deployment scheinbar erfolgreich, aber falscher Stand aktiv
+
+Prüfen:
+
+Versionsanzeige in der Anwendung:
+
+```text
+FE v...
+BE v...
+```
+
+Beispiel:
+
+```text
+localhost | Proxy → localhost:8080 | FE v1.0.1-SNAPSHOT | BE v1.1.2-SNAPSHOT
+```
+
+Abgleich:
+
+- entspricht Frontend-Version dem erwarteten Build?
+- entspricht Backend-Version dem erwarteten Deployment?
+- passen Frontend und Backend fachlich zusammen?
+
+Typische Ursachen:
+
+- falscher Frontend Build deployed
+- falsche Backend JAR deployed
+- Container nicht redeployed
+- Browser Cache
+- falsche Zielumgebung (DEV/PROD verwechselt)
+- Frontend / Backend Versions-Mismatch
+
+Technische Prüfung:
+
+Frontend Container:
+
+```bash
+docker ps | grep emc-mitglieder-frontend
+docker logs emc-mitglieder-frontend-dev --tail 50
+docker logs emc-mitglieder-frontend-prod --tail 50
+```
+
+Backend Container:
+
+```bash
+docker ps | grep emc-mitglieder-backend
+docker logs emc-mitglieder-backend-dev --tail 50
+docker logs emc-mitglieder-backend-prod --tail 50
+```
+
+Empfohlene Maßnahmen:
+
+- Browser Hard Reload
+- Container Redeploy
+- korrekten Build prüfen
+- Artefakte im Build-Verzeichnis kontrollieren
 
 ---
 

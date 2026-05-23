@@ -62,7 +62,8 @@
     - [8.3 Fachlicher Smoke Test](#83-fachlicher-smoke-test)
     - [8.4 Schreibtest](#84-schreibtest)
     - [8.5 Monitoring](#85-monitoring)
-    - [8.6 Logprüfung](#86-logprüfung)
+    - [8.6 Versionsprüfung](#86-versionsprüfung)
+    - [8.7 Logprüfung](#87-logprüfung)
   - [9. Rollback-Grundprinzip](#9-rollback-grundprinzip)
     - [9.1 Grundprinzip](#91-grundprinzip)
     - [9.2 Frontend Rollback](#92-frontend-rollback)
@@ -1098,7 +1099,43 @@ Uptime Kuma:
 
 ---
 
-### 8.6 Logprüfung
+### 8.6 Versionsprüfung
+
+Nach Deployment Versionsanzeige prüfen.
+
+Frontend:
+
+- Frontend-Version sichtbar
+- erwartete Version korrekt
+
+Backend:
+
+- Backend-Version sichtbar
+- erwartete Version korrekt
+
+Beispiel:
+
+```text
+FE v1.0.0-SNAPSHOT | BE v1.1.1-SNAPSHOT
+```
+
+Zweck:
+
+- schneller technischer Deployment-Sanity-Check
+- Erkennung falscher Builds
+- Erkennung fehlender Redeployments
+- Erkennung von Frontend-/Backend-Versionsabweichungen
+
+Wenn Versionen nicht erwartungsgemäß erscheinen:
+
+- falscher Build deployed
+- Container nicht redeployed
+- Browser Cache aktiv
+- falsche Zielumgebung verwendet
+
+---
+
+### 8.7 Logprüfung
 
 Frontend:
 

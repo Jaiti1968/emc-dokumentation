@@ -60,9 +60,10 @@
     - [8.13 Sicherheitsprinzipien](#813-sicherheitsprinzipien)
   - [9. API-Architektur](#9-api-architektur)
     - [9.1 Auth API](#91-auth-api)
-    - [9.2 Mitglieder API](#92-mitglieder-api)
-    - [9.3 Lookup API](#93-lookup-api)
-    - [9.4 Admin API](#94-admin-api)
+    - [9.2 System API](#92-system-api)
+    - [9.3 Mitglieder API](#93-mitglieder-api)
+    - [9.4 Lookup API](#94-lookup-api)
+    - [9.5 Admin API](#95-admin-api)
   - [10. Frontend-Architektur](#10-frontend-architektur)
     - [10.1 Technologiestack](#101-technologiestack)
     - [10.2 Frontend-Schichtenmodell](#102-frontend-schichtenmodell)
@@ -696,6 +697,7 @@ Die verbindliche Autorisierung erfolgt im Backend über Spring Security.
 | `POST /api/members`      | `ADMIN`, `EDITOR`           |
 | `PUT /api/members/**`    | `ADMIN`, `EDITOR`           |
 | `DELETE /api/members/**` | nur `ADMIN`                 |
+| `GET /api/system/info`   | angemeldete Benutzer        |
 
 ---
 
@@ -852,7 +854,32 @@ Vorteile:
 
 ---
 
-### 9.2 Mitglieder API
+### 9.2 System API
+
+Technischer Betriebsendpunkt:
+
+| Methode | Endpunkt           | Zweck                     |
+| ------- | ------------------ | ------------------------- |
+| `GET`   | `/api/system/info` | Versions-/Systeminformationen |
+
+Beispiel Response:
+
+```json
+{
+  "backendVersion": "1.1.1-SNAPSHOT"
+}
+```
+
+Verwendung:
+
+- Deployment-Verifikation
+- Betriebsdiagnose
+- Support
+- Frontend Versionsanzeige
+
+---
+
+### 9.3 Mitglieder API
 
 | Methode | Endpunkt                                        | Zweck                 |
 | ------- | ----------------------------------------------- | --------------------- |
@@ -869,7 +896,7 @@ Vorteile:
 
 ---
 
-### 9.3 Lookup API
+### 9.4 Lookup API
 
 | Methode | Endpunkt                     | Zweck            |
 | ------- | ---------------------------- | ---------------- |
@@ -878,7 +905,7 @@ Vorteile:
 
 ---
 
-### 9.4 Admin API
+### 9.5 Admin API
 
 | Methode | Endpunkt                         | Zweck            |
 | ------- | -------------------------------- | ---------------- |
@@ -982,6 +1009,7 @@ Verantwortlichkeiten:
 - Fehlerbehandlung
 - Session-Kommunikation
 - Authentifizierungsverhalten
+- technische Systeminformationen
 
 Die Sessionkommunikation erfolgt explizit mit:
 
@@ -1031,6 +1059,7 @@ Beispiele:
 - Tabellen
 - Statusanzeigen
 - Fehlermeldungen
+- Versionsanzeige
 
 ---
 
