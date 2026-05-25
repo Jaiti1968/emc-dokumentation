@@ -640,6 +640,17 @@ Nur dessen Inhalt wird ersetzt.
 
 #### Neues Frontend-Artefakt übertragen
 
+> [!NOTE]
+> Die folgenden SCP-Beispiele setzen voraus, dass die lokale PowerShell im Frontend-Projektverzeichnis geöffnet ist.
+>
+> Beispiel:
+>
+> ```text
+> C:\Users\Joerg\IdeaProjects\mitglieder-frontend
+> ```
+>
+> Andernfalls müssen absolute oder angepasste lokale Pfade verwendet werden.
+
 Beispiel via SCP (Windows PowerShell):
 
 DEV:
@@ -998,7 +1009,7 @@ DEV:
 for f in /volume1/docker/build/mitglieder-backend-dev/target/*.jar; do
   [ -e "$f" ] || continue
   BASENAME=$(basename "$f" .jar)
-  mv "$f" "/volume1/docker/build/archive/backend/${BASENAME}-${TIMESTAMP}.jar"
+  mv "$f" "/volume1/docker/build/archive/backend/${BASENAME}-dev-${TIMESTAMP}.jar"
 done
 ```
 
@@ -1008,7 +1019,7 @@ PROD:
 for f in /volume1/docker/build/mitglieder-backend-prod/target/*.jar; do
   [ -e "$f" ] || continue
   BASENAME=$(basename "$f" .jar)
-  mv "$f" "/volume1/docker/build/archive/backend/${BASENAME}-${TIMESTAMP}.jar"
+  mv "$f" "/volume1/docker/build/archive/backend/${BASENAME}-prod-${TIMESTAMP}.jar"
 done
 ```
 
@@ -1067,6 +1078,17 @@ Im target-Verzeichnis darf nur das aktuell zu deployende Backend-Artefakt liegen
 ---
 
 #### Neues Artefakt übertragen
+
+> [!NOTE]
+> Die folgenden SCP-Beispiele setzen voraus, dass die lokale PowerShell im Backend-Projektverzeichnis geöffnet ist.
+>
+> Beispiel:
+>
+> ```text
+> C:\Users\Joerg\IdeaProjects\mitglieder-backend
+> ```
+>
+> Andernfalls müssen absolute oder angepasste lokale Pfade verwendet werden.
 
 Beispiel via SCP (Windows PowerShell):
 

@@ -61,9 +61,10 @@
     - [9.4 Restore Nachkontrolle](#94-restore-nachkontrolle)
     - [9.5 Restore Sicherheitsregeln](#95-restore-sicherheitsregeln)
   - [10. Deployment Recovery](#10-deployment-recovery)
-    - [10.1 Frontend Recovery](#101-frontend-recovery)
-    - [10.2 Backend Recovery](#102-backend-recovery)
-    - [10.3 Monitoring Recovery](#103-monitoring-recovery)
+    - [10.1 Deployment-Artefakt-Rollback](#101-deployment-artefakt-rollback)
+    - [10.2 Frontend Recovery](#102-frontend-recovery)
+    - [10.3 Backend Recovery](#103-backend-recovery)
+    - [10.4 Monitoring Recovery](#104-monitoring-recovery)
   - [11. Datenbank Notfallmaßnahmen](#11-datenbank-notfallmaßnahmen)
     - [11.1 Sofortmaßnahmen](#111-sofortmaßnahmen)
     - [11.2 MariaDB prüfen](#112-mariadb-prüfen)
@@ -1227,7 +1228,63 @@ Dieses Kapitel beschreibt Recovery bei fehlgeschlagenen Deployments.
 
 ---
 
-### 10.1 Frontend Recovery
+### 10.1 Deployment-Artefakt-Rollback
+
+Neben Datenbank-Backups stehen archivierte Deployment-Artefakte für technische Rollbacks zur Verfügung.
+
+Archivpfade:
+
+Backend:
+
+```text
+/volume1/docker/build/archive/backend
+```
+
+Frontend:
+
+```text
+/volume1/docker/build/archive/frontend
+```
+
+Beispiele:
+
+Backend:
+
+```text
+mitglieder-backend-1.1.1-SNAPSHOT-dev-2026-05-23_20-15.jar
+mitglieder-backend-1.1.1-SNAPSHOT-prod-2026-05-23_20-15.jar
+```
+
+Frontend:
+
+```text
+dist-dev-2026-05-23_20-15
+dist-prod-2026-05-23_20-15
+```
+
+Geeignet für:
+
+- fehlerhaftes Deployment
+- falscher Frontend Build
+- falsches Backend-Artefakt
+- schnelle Rückkehr auf letzten funktionierenden technischen Stand
+
+Nicht geeignet für:
+
+- Datenbank-Inkonsistenzen
+- fachliche Datenfehler
+- Schema-/Datenmigrationsprobleme
+
+Dafür sind Datenbank-Backups erforderlich.
+
+> [!IMPORTANT]
+> Deployment-Artefakt-Rollback ersetzt kein Datenbank-Restore.
+
+Wenn zwischenzeitlich API-, Datenmodell- oder Datenbankschemaänderungen erfolgt sind, kann zusätzlich ein Restore erforderlich sein.
+
+---
+
+### 10.2 Frontend Recovery
 
 Typische Fälle:
 
@@ -1260,7 +1317,7 @@ docker restart emc-mitglieder-frontend-prod
 
 ---
 
-### 10.2 Backend Recovery
+### 10.3 Backend Recovery
 
 Typische Fälle:
 
@@ -1309,7 +1366,7 @@ docker restart emc-mitglieder-backend-prod
 
 ---
 
-### 10.3 Monitoring Recovery
+### 10.4 Monitoring Recovery
 
 Wenn Monitoring selbst fehlerhaft:
 
