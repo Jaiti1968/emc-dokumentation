@@ -1522,6 +1522,23 @@ Wenn Versionen nicht erwartungsgemäß erscheinen:
 - Browser Cache aktiv
 - falsche Zielumgebung verwendet
 
+> [!NOTE]
+> API-Tests gegen DEV und PROD erfolgen bewusst über den jeweiligen Frontend/nginx-Proxy.
+>
+> Das Backend ist aus Sicherheitsgründen nicht direkt exponiert.
+>
+> API-Testpfad:
+
+```text
+Postman
+→ Frontend/nginx Proxy
+→ Backend API
+```
+
+> Für API-Tests muss daher der Frontend-Container laufen und der `/api` Proxy korrekt funktionieren.
+>
+> Die React-Benutzeroberfläche selbst ist dafür nicht relevant.
+
 ---
 
 ### 8.7 Logprüfung
