@@ -23,6 +23,7 @@
     - [4.2 Containerlandschaft](#42-containerlandschaft)
     - [4.3 Umgebungen](#43-umgebungen)
       - [DEV](#dev)
+      - [TEST](#test)
       - [PROD](#prod)
   - [5. Docker-Netzwerkarchitektur](#5-docker-netzwerkarchitektur)
     - [5.1 EMC Hauptnetzwerk](#51-emc-hauptnetzwerk)
@@ -277,7 +278,12 @@ Backend:
 Aktueller Zugriff:
 
 - lokales Netzwerk
-- VPN-basierter externer Zugriff
+- kontrollierter externer Zugriff je nach Betriebskonfiguration
+
+Aktuell technisch möglich:
+
+- Frontend-basierter Webzugriff
+- VPN-basierter Zugriff
 
 Perspektivisch geplant:
 
@@ -335,22 +341,46 @@ Aktuell laufende Container:
 
 ### 4.3 Umgebungen
 
-Die Anwendung unterscheidet zwei technische Umgebungen.
+Die Anwendung unterscheidet drei technische Umgebungen.
 
 #### DEV
 
 Zweck:
 
 - Entwicklung
-- Tests
 - technische Validierung
-- Vorstufe für PROD
+- Vorstufe für Releases
 
 Komponenten:
 
 - DEV Frontend
 - DEV Backend
 - separate DEV Datenbank innerhalb gemeinsamer MariaDB Instanz
+
+---
+
+#### TEST
+
+Zweck:
+
+- automatisierte Backend Integration Tests
+
+Komponenten:
+
+- dedizierte Test-Datenbank
+- keine dauerhaft laufenden Containerumgebung
+
+Datenbank:
+
+```text
+emc_mitglieder_test
+```
+
+Zugriff:
+
+```text
+dedizierter technischer Datenbankbenutzer
+```
 
 ---
 
@@ -368,7 +398,7 @@ Komponenten:
 - separate PROD Datenbank innerhalb gemeinsamer MariaDB Instanz
 
 > [!NOTE]
-> DEV und PROD teilen sich aktuell dieselbe MariaDB-Instanz, verwenden jedoch getrennte Datenbanken.
+> DEV, TEST und PROD teilen sich aktuell dieselbe MariaDB-Instanz, verwenden jedoch logisch getrennte Datenbanken.
 
 ---
 
@@ -626,6 +656,7 @@ Aktuelle Datenbanken:
 | Umgebung | Datenbank |
 |---------|-----------|
 | DEV | emc_mitglieder_dev |
+| TEST | emc_mitglieder_test |
 | PROD | emc_mitglieder |
 
 Zusätzlich vorhanden:
@@ -647,6 +678,8 @@ phpMyAdmin
 ```
 
 oder technische Direktzugriffe.
+
+Für automatisierte Backend Integration Tests existiert ein dedizierter technischer Datenbankbenutzer mit Zugriff ausschließlich auf die Test-Datenbank.
 
 ---
 
@@ -1643,7 +1676,7 @@ beschrieben.
 Aktueller Zugriff:
 
 - internes Netzwerk
-- VPN-basierter Fernzugriff
+- kontrollierter externer Zugriff abhängig von Betriebskonfiguration
 
 Die Anwendung ist derzeit nicht für offenen Internetbetrieb ausgelegt.
 
@@ -1732,9 +1765,10 @@ Dies ist im aktuellen Pilotbetrieb bewusst akzeptiert.
 
 Begründung:
 
-- interne Nutzung
-- VPN Zugriff
+- kontrollierter Pilotbetrieb
+- sessionbasierte Webanwendung
 - begrenzter Benutzerkreis
+- Backend nicht direkt extern exponiert
 
 > [!WARNING]
 > Bei echtem Internetbetrieb ist eine Neubewertung erforderlich.
@@ -1833,6 +1867,7 @@ Typische Aufgaben:
 - Tabellenzustand prüfen
 - Backupkontrolle
 - Speicherplatzprüfung
+- Benutzer- und Rechteprüfung
 
 Werkzeuge:
 
@@ -1897,7 +1932,10 @@ Aktueller Status:
 
 Aktuell:
 
-- faktisch Einzelanwenderbetrieb
+Aktuell:
+
+- technisch Mehrbenutzer-fähig
+- operativ derzeit faktisch Einzelanwenderbetrieb
 
 Perspektivisch:
 

@@ -1,6 +1,6 @@
 # EMC Dokumentation
 
-Technische und fachliche Projektdokumentation für die EMC Mitgliederverwaltung.
+Technische, betriebliche und fachliche Projektdokumentation für die EMC Mitgliederverwaltung.
 
 ## Dokumente
 
@@ -9,13 +9,14 @@ Technische und fachliche Projektdokumentation für die EMC Mitgliederverwaltung.
 - docs/03-benutzerhandbuch.md
 - docs/04-architektur.md
 - docs/05-troubleshooting-backup-restore.md
+- docs/06-projektbacklog.md
 - docs/CHANGELOG.md
 
 ## Struktur
 
 ### docs
 
-Fachliche und technische Dokumentation
+Fachliche, betriebliche und technische Dokumentation
 
 ### diagrams
 

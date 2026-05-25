@@ -16,6 +16,11 @@
     - [3.3 Architektur / Plattform](#33-architektur--plattform)
     - [3.4 Frontend Codequalität / UX](#34-frontend-codequalität--ux)
   - [4. Betrieb / Infrastruktur Backlog](#4-betrieb--infrastruktur-backlog)
+    - [Docker / NAS Betriebsstandardisierung](#docker--nas-betriebsstandardisierung)
+    - [MariaDB Benutzer / Rechte](#mariadb-benutzer--rechte)
+    - [Backup / Storage](#backup--storage)
+    - [Deployment / Betrieb](#deployment--betrieb)
+    - [Betriebsqualität](#betriebsqualität)
   - [5. Fachliches Backlog](#5-fachliches-backlog)
   - [6. Dokumentations Backlog](#6-dokumentations-backlog)
   - [7. Strategische Themen / Entscheidungen](#7-strategische-themen--entscheidungen)
@@ -51,9 +56,9 @@ Temporäre TODO-Dateien in Frontend- oder Backend-Projekten können während akt
 
 | Priorität | Thema | Bereich | Status |
 |---------|--------|--------|--------|
-| P1 | Backend Integration Tests Phase 1 | Technik | offen |
 | P1 | NAS Betriebsstandardisierung / Docker Cleanup | Betrieb | offen |
 | P1 | Benutzerhandbuch MVP / Pilotbetrieb | Dokumentation | offen |
+| P1 | MariaDB Benutzer- und Rechtebereinigung / Standardisierung | Infrastruktur / Security | offen |
 | P2 | Security Hardening Phase 4 | Technik | offen |
 | P2 | Frontend image-basiertes Deployment prüfen | Betrieb / Deployment | offen |
 | P2 | Access-Ablösung operative Pflege | Fachlichkeit | offen |
@@ -66,14 +71,16 @@ Temporäre TODO-Dateien in Frontend- oder Backend-Projekten können während akt
 
 #### Backend
 
-- [ ] Integration Tests für kritische End-to-End Backend-Flows
-  - Auth
-  - Session Management
-  - Rollen / Security
-  - Mitglieder CRUD
-  - Benutzerverwaltung
+- [ ] zusätzliche Integration Tests für zukünftige neue Fachmodule
+  - Ehrungen
+  - Funktionen
+  - Verteiler
 
-- [ ] Teststrategie Ebene 3 finalisieren
+- [ ] Security-Hardening-nahe Integration Tests
+  - Session Timeout
+  - Account Lockout
+  - Passwort Lifecycle Erweiterungen
+
 - [ ] Docker Healthcheck
 
 #### Frontend
@@ -117,10 +124,45 @@ Frontend Integration Tests sind erst nach Phase 4 Security Hardening sinnvoll, d
 - [ ] PATCH vs PUT für Teilupdates bewerten
 - [ ] Swagger / OpenAPI
 - [ ] Flyway Migrationen vollständig etablieren
+- [ ] MariaDB Service-Accounts standardisieren
 - [ ] Audit Logging
 - [ ] Änderungsverlauf / Historisierung
 - [ ] Session Status Indikator
 - [ ] Benutzerprofil / eigenes Passwort ändern
+
+- [ ] Frontend Umgebungsidentifikation standardisieren
+
+Ziel:
+
+Die Anwendung soll die aktive Betriebsumgebung eindeutig und technisch sauber anzeigen.
+
+Aktueller Zustand:
+
+```text
+localhost | Proxy → localhost:8080
+```
+
+Problem:
+
+- technische Proxy-Information statt fachlicher Umgebungsidentität
+- DEV / PROD nicht konsistent als Umgebung sichtbar
+- lokale Entwicklung nicht sauber vom Betriebsmodus getrennt
+
+Zielbild:
+
+```text
+LOCAL | FE v... | BE v...
+DEV   | FE v... | BE v...
+PROD  | FE v... | BE v...
+```
+
+Mögliche technische Umsetzung:
+
+- Frontend Environment-Konfiguration
+- build-time Kennzeichnung
+- zentrale Environment Detection
+- konsistente Anzeige in der Versions-/Systeminfo
+
 
 ---
 
@@ -139,10 +181,40 @@ Frontend Integration Tests sind erst nach Phase 4 Security Hardening sinnvoll, d
 
 ## 4. Betrieb / Infrastruktur Backlog
 
+### Docker / NAS Betriebsstandardisierung
+
 - [ ] Docker Netzwerk Cleanup
 - [ ] historische Default-Netzwerke bereinigen
-- [ ] NAS Betriebsstandardisierung
+- [ ] NAS Betriebsstandardisierung abschließen
 - [ ] Rechtekonzept Docker Build-Verzeichnisse prüfen
+
+---
+
+### MariaDB Benutzer / Rechte
+
+- [ ] MariaDB Benutzer- und Rechtebereinigung / Standardisierung
+
+Ziel:
+
+- historische Benutzer bereinigen
+- technische Service-Accounts standardisieren
+- personenbezogene technische Accounts vermeiden
+- Least-Privilege-Rechtemodell etablieren
+
+Zu prüfen:
+
+- Backend DEV
+- Backend PROD
+- Backend TEST
+- Backup Service
+- phpMyAdmin
+- Access Altzugriffe
+- technische Administrationszugänge
+
+---
+
+### Backup / Storage
+
 - [ ] Backup Pfad Standardisierung
 
 Aktuell:
@@ -171,6 +243,10 @@ Fragen:
 - wie viele Artefakte behalten?
 - Rotation?
 - manuell vs automatisiert?
+
+---
+
+### Deployment / Betrieb
 
 - [ ] Frontend image-basiertes Deployment prüfen
 
@@ -204,8 +280,13 @@ Bewertung:
 - Aufwand klein bis mittel
 - nicht sofort notwendig
 
+---
+
+### Betriebsqualität
+
 - [ ] PROD Smoke-Test Standard definieren
 - [ ] Postman Test Collections versionieren
+- [ ] Docker Healthcheck
 
 ---
 
@@ -231,8 +312,6 @@ Strategisch:
 
 - [ ] 03 Benutzerhandbuch MVP erstellen
 - [ ] Screenshots / Benutzerführung ergänzen
-- [ ] Deployment-Dokumentation Review
-- [ ] Betriebshandbuch Review
 - [ ] Changelog Pflegeprozess etablieren
 - [ ] Dokumentations-Versionierung prüfen
 
@@ -318,6 +397,7 @@ Technik:
 - [x] Frontend Unit Tests (64)
 - [x] Versionsanzeige FE / BE
 - [x] `/api/system/info`
+- [x] Backend Integration Tests (29)
 
 Frontend:
 
@@ -338,6 +418,8 @@ Betrieb:
 - [x] Deployment Recovery etabliert
 - [x] Monitoring mit Uptime Kuma
 - [x] Telegram Alerts
+- [x] DEV / TEST / PROD Datenbanktrennung
+- [x] dedizierter Backend Test-Datenbankbenutzer
 
 Dokumentation:
 

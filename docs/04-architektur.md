@@ -99,6 +99,8 @@
   - [14. Testing](#14-testing)
     - [14.1 Frontend Testing](#141-frontend-testing)
     - [14.2 Backend Testing](#142-backend-testing)
+      - [Unit / Slice Tests](#unit--slice-tests)
+      - [Integration Tests](#integration-tests)
     - [14.3 Teststrategie Ausblick](#143-teststrategie-ausblick)
   - [15. Architekturentscheidungen](#15-architekturentscheidungen)
     - [15.1 Spring Boot statt Node.js](#151-spring-boot-statt-nodejs)
@@ -110,9 +112,11 @@
     - [15.7 React Query für Server State](#157-react-query-für-server-state)
     - [15.8 React Hook Form für Formulararchitektur](#158-react-hook-form-für-formulararchitektur)
   - [16. Geplante Architektur-Erweiterungen](#16-geplante-architektur-erweiterungen)
-    - [Fachliche Erweiterungen](#fachliche-erweiterungen)
-    - [Technische Erweiterungen](#technische-erweiterungen)
-    - [Betriebsreife](#betriebsreife)
+    - [16.1 Security Hardening](#161-security-hardening)
+    - [16.2 Fachliche Erweiterungen](#162-fachliche-erweiterungen)
+    - [16.3 Teststrategie-Erweiterungen](#163-teststrategie-erweiterungen)
+    - [16.4 Infrastruktur-Hardening](#164-infrastruktur-hardening)
+    - [16.5 Betriebsarchitektur](#165-betriebsarchitektur)
 
 ---
 
@@ -387,10 +391,19 @@ Zusätzlich:
 
 - MariaDB
 
-DEV und PROD nutzen getrennte Datenbanken innerhalb derselben MariaDB-Instanz:
+DEV, TEST und PROD nutzen getrennte Datenbanken innerhalb derselben MariaDB-Instanz:
 
-- `emc_mitglieder`
-- `emc_mitglieder_dev`
+- `emc_mitglieder` (PROD)
+- `emc_mitglieder_dev` (DEV)
+- `emc_mitglieder_test` (Backend Integration Tests)
+
+Die Test-Datenbank wird ausschließlich für automatisierte Backend Integration Tests verwendet.
+
+Zugriff erfolgt über einen dedizierten technischen Datenbankbenutzer:
+
+```text
+emc_backend_test_rw
+```
 
 ---
 
@@ -696,7 +709,6 @@ Die verbindliche Autorisierung erfolgt im Backend über Spring Security.
 | `GET /api/members/**`    | `ADMIN`, `EDITOR`, `VIEWER` |
 | `POST /api/members`      | `ADMIN`, `EDITOR`           |
 | `PUT /api/members/**`    | `ADMIN`, `EDITOR`           |
-| `DELETE /api/members/**` | nur `ADMIN`                 |
 | `GET /api/system/info`   | angemeldete Benutzer        |
 
 ---
@@ -777,10 +789,10 @@ Diese Entscheidung wurde im aktuellen Pilotbetrieb bewusst pragmatisch getroffen
 
 Begründung:
 
-- interne Nutzung
-- VPN-basierter Zugriff
+- aktuell kontrollierter Pilotbetrieb
 - sessionbasierte SPA Architektur
 - begrenzter Benutzerkreis
+- Backend nicht direkt extern exponiert
 
 > [!WARNING]
 > Bei künftigem echtem Internetbetrieb (Domain / DynDNS / Reverse Proxy) sollte die CSRF-Strategie erneut bewertet und ggf. gehärtet werden.
@@ -1446,13 +1458,22 @@ Automatisierte Tests sind sowohl im Frontend als auch im Backend vorhanden.
 
 ### 14.1 Frontend Testing
 
-Das Frontend verwendet:
+Das Frontend verwendet eine fokussierte Unit-Teststrategie für formularnahe Geschäftslogik.
 
-```text
-Vitest
-```
+Ziel:
 
-Aktuell abgedeckte Bereiche:
+- schnelle technische Rückmeldung
+- Absicherung zentraler Validierungslogik
+- stabile Formularverarbeitung
+- Schutz vor Regressionsfehlern bei Refactoring
+
+Technologie:
+
+- Vitest
+
+Aktuell abgedeckter Scope:
+
+Validatoren:
 
 - validationHelpers
 - dateHelpers
@@ -1462,50 +1483,145 @@ Aktuell abgedeckte Bereiche:
 - datenschutzValidator
 - chorkleidungValidator
 
-Ziele:
+Testschwerpunkt:
 
-- Qualitätssicherung der Formularlogik
-- Validierungsabsicherung
-- Regressionserkennung
+- Pflichtfeldvalidierung
+- Datumsvalidierung
+- fachliche Eingaberegeln
+- Formularvalidierung
+- Hilfsfunktionen
+
+Aktueller Frontend-Teststand:
+
+```text
+64 Unit Tests
+```
+
+Bewusste Projektentscheidung:
+
+Der Fokus liegt auf stabiler Absicherung der formularnahen Geschäftslogik.
+
+UI-Komponenten-Tests und End-to-End-Tests sind aktuell nicht Bestandteil des MVP-Testumfangs.
 
 ---
 
 ### 14.2 Backend Testing
 
-Für das Backend existieren automatisierte Tests.
+Das Backend verwendet eine mehrstufige Teststrategie.
 
-Aktuell abgedeckte Bereiche:
+#### Unit / Slice Tests
 
-- Auth
-- Admin User
-- Member Controller
-- Member Service
-- Mapper
-- Security
-- Spring Context
+Ziel:
 
-Ziele:
+- schnelle technische Rückmeldung
+- isolierte Prüfungen einzelner Komponenten
 
-- API Absicherung
-- Security Absicherung
-- Service Logik Prüfung
-- Regressionserkennung
+Bereiche:
+
+- Controller Tests
+- Security Tests
+- Validierungsnahe Tests
+- Service-nahe Tests
+
+#### Integration Tests
+
+Technik:
+
+- `@SpringBootTest`
+- `MockMvc`
+- echte Spring Security
+- echte Session-basierte Authentifizierung
+- echte MariaDB Test-Datenbank
+- JdbcTemplate-basierte Persistenzprüfung
+
+Bewusste Architekturentscheidung:
+
+```text
+keine Testcontainers
+```
+
+Begründung:
+
+- pragmatischer Projektansatz
+- Einzelentwicklerprojekt
+- produktionsnahe dedizierte Testdatenbank
+
+Aktueller Stand:
+
+Backend:
+
+```text
+29 Integration Tests
+```
+
+Abgedeckter Backend Scope:
+
+- Login / Logout
+- Session Restore
+- Rollenbasierte Autorisierung
+- Mitglieder lesen
+- Mitglieder schreiben
+- Admin Benutzerverwaltung
+- Passwort Lifecycle
+- Aktiv/Inaktiv Verhalten
+- Mitglied anlegen
+- Transaktions-Rollback
+- Default-Datensatzinitialisierung
 
 ---
 
 ### 14.3 Teststrategie Ausblick
 
-Die Teststrategie wird schrittweise erweitert.
+Die zentrale Teststrategie für den MVP ist umgesetzt.
 
-Geplante Ausbaustufen:
+Aktueller Stand:
 
-- zusätzliche Service Tests
-- Integrationstests
-- API End-to-End Prüfungen
-- weitere Security Tests
+- Frontend Unit Tests für formularnahe Geschäftslogik
+- Backend Unit / Slice Tests
+- Backend Integration Tests für zentrale Kernprozesse
 
-> [!NOTE]
-> Die aktuelle Teststrategie entspricht bewusst dem aktuellen MVP-/Pilotbetriebsstatus und wird mit wachsender Produktivreife ausgebaut.
+Bereits abgedeckte Kernbereiche:
+
+- Authentifizierung
+- Session Lifecycle
+- Rollenbasierte Autorisierung
+- Mitglieder lesen
+- Mitglieder schreiben
+- Mitglied anlegen
+- Admin Benutzerverwaltung
+- Passwort Lifecycle
+- Aktiv/Inaktiv Verhalten
+- Transaktions-Rollback
+- Default-Datensatzinitialisierung
+
+Weitere Testausbaustufen erfolgen bedarfsorientiert bei zukünftigen Erweiterungen.
+
+Mögliche spätere Erweiterungen:
+
+- zusätzliche Integration Tests für neue Fachmodule
+  - Ehrungen
+  - Funktionen
+  - Verteiler
+
+- Security Hardening Tests
+  - Session Timeout
+  - Account Lockout
+  - Brute Force Schutz
+  - Passwort Lifecycle Erweiterungen
+
+- Frontend Component Tests
+  - kritische Form-Komponenten
+  - komplexe Interaktionslogik
+
+- optionale End-to-End Tests
+
+Bewusste Projektentscheidung:
+
+Für den MVP wurde ein pragmatischer Testansatz gewählt:
+
+- hoher Nutzen bei überschaubarem Wartungsaufwand
+- Fokus auf fachlich kritische Kernprozesse
+- keine vollständige Testabdeckung um ihrer selbst willen
 
 ---
 
@@ -1665,43 +1781,95 @@ Gründe:
 
 ## 16. Geplante Architektur-Erweiterungen
 
-Die aktuelle Architektur unterstützt bereits einen produktivnahen Pilotbetrieb.
+Die aktuelle Architektur deckt den vollständigen MVP-Kernbetrieb ab.
 
-Ein vollständiger Mehrbenutzer-Rollout mit echter externer Erreichbarkeit ist perspektivisch vorgesehen.
+Weitere technische und fachliche Erweiterungen sind für spätere Projektphasen vorgesehen.
+
+### 16.1 Security Hardening
+
+Geplante Sicherheitsmaßnahmen:
+
+- Session Timeout
+- automatischer Logout bei Inaktivität
+- Passwortwechsel beim Erstlogin
+- Initialpasswort-Workflow
+- Passwort Reset / Recovery Workflow
+- Brute Force Schutz
+- Fehlversuchszähler
+- temporäre Kontosperren
+- Schutz vor Deaktivierung des letzten aktiven Administrators
+- Session Invalidierung bei Rollenänderung
+- erneute Bewertung der CSRF-Strategie bei erweitertem Internetbetrieb
+
+Ziel:
+
+Erhöhung des Sicherheitsniveaus für einen später erweiterten Benutzerkreis und produktionsnahen Mehrbenutzerbetrieb.
 
 ---
 
-### Fachliche Erweiterungen
+### 16.2 Fachliche Erweiterungen
 
-Geplant:
+Geplante Fachmodule:
 
 - Ehrungen
 - Funktionen
 - Verteiler
-- vollständige Access-Ablösung
+
+Mögliche spätere Erweiterungen:
+
+- Berichte
+- Exportfunktionen
+- Mailversand
+- Historisierung
+- Archivfunktionen
+
+Ziel:
+
+schrittweise funktionale Ablösung des bisherigen Access-Systems.
 
 ---
 
-### Technische Erweiterungen
+### 16.3 Teststrategie-Erweiterungen
 
-Geplant:
+Weitere Testausbaustufen:
 
-- Domain / DynDNS Zugriff
-- Reverse Proxy
-- TLS / HTTPS
-- Security Härtung
-- erweiterte Integrationstests
-- Backup / Restore Ausbau
-- professioneller Mehrbenutzerbetrieb
+- zusätzliche Integration Tests für neue Fachmodule
+- Security-Hardening Tests
+- Frontend Component Tests
+- optionale End-to-End Tests
+
+Ziel:
+
+kontinuierliche Qualitätssicherung bei wachsendem Projektumfang.
 
 ---
 
-### Betriebsreife
+### 16.4 Infrastruktur-Hardening
 
-Mit zunehmender Produktivnutzung werden insbesondere folgende Bereiche weiter professionalisiert:
+Geplante technische Infrastrukturmaßnahmen:
 
-- Monitoring
-- Deployment Prozesse
-- Recovery Prozesse
-- Sicherheitsmaßnahmen
-- Betriebsdokumentation
+- MariaDB Benutzer- und Rechtebereinigung / Standardisierung
+- Bereinigung historischer technischer Altlasten
+- weitere Standardisierung technischer Service-Accounts
+- Least-Privilege-Härtung technischer Zugänge
+- Review von Backup-/Restore-Berechtigungen
+
+Ziel:
+
+Verbesserung von Wartbarkeit, Sicherheit und technischer Nachvollziehbarkeit des Betriebs.
+
+---
+
+### 16.5 Betriebsarchitektur
+
+Mögliche spätere Betriebsmaßnahmen:
+
+- Reverse Proxy / öffentliche Webbereitstellung
+- TLS-Härtung
+- externe Erreichbarkeit ohne VPN-Abhängigkeit
+- Monitoring-Ausbau
+- erweitertes Betriebs-Logging
+
+Ziel:
+
+Vorbereitung auf einen stabilen produktionsnahen Mehrbenutzerbetrieb.

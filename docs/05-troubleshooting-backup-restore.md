@@ -789,31 +789,32 @@ docker logs uptime-kuma --tail 100
 Typische Symptome:
 
 - Webanwendung nicht erreichbar
+- Frontend URL nicht erreichbar
 - Portainer nicht erreichbar
 - phpMyAdmin nicht erreichbar
 - NAS Weboberfläche nicht erreichbar
 
 Prüfen:
 
-Ist WireGuard VPN aktiv?
+Welche Zugriffsart wird genutzt?
 
-Client prüfen:
-
-- WireGuard Verbindung aktiv?
-- Tunnel verbunden?
-- korrekte Fritz!Box Verbindung?
+- lokales Netzwerk
+- VPN
+- Frontend-basierter Webzugriff
+- sonstige externe Erreichbarkeit
 
 Typische Ursachen:
 
-- VPN Tunnel nicht aktiv
 - VPN Verbindung getrennt
-- Fritz!Box VPN Problem
-- lokales Netzwerkproblem
+- Routing-/Netzwerkproblem
+- DNS Problem
+- Reverse Proxy / Webzugriffsproblem
 - Internetverbindung gestört
+- NAS nicht erreichbar
 
 Abgrenzung:
 
-Wenn Dienste intern auf dem NAS laufen, aber extern nicht erreichbar sind, liegt die Ursache häufig nicht bei Docker oder der Anwendung, sondern beim VPN-Zugriff.
+Wenn Dienste intern auf dem NAS funktionieren, aber extern nicht erreichbar sind, liegt die Ursache häufig im Zugriffsweg und nicht in Docker oder der Anwendung selbst.
 
 ---
 
@@ -838,7 +839,7 @@ BE v...
 Beispiel:
 
 ```text
-localhost | Proxy → localhost:8080 | FE v1.0.1-SNAPSHOT | BE v1.1.2-SNAPSHOT
+localhost | Proxy → localhost:8080 | FE v1.0.1-SNAPSHOT | BE v1.1.1-SNAPSHOT
 ```
 
 Abgleich:
@@ -903,7 +904,7 @@ Aktuelles Verhalten:
 
 - tägliche automatisierte Datenbank-Dumps
 - komprimierte Sicherungen (`.sql.gz`)
-- Sicherung mehrerer Datenbanken
+- Sicherung produktiver und betrieblicher Anwendungsdatenbanken
 - zeitgestempelte Sicherungen
 - zusätzlich aktuelle `latest.*` Referenzdateien
 
@@ -915,6 +916,9 @@ Beispiele:
 latest.emc_mitglieder.sql.gz
 latest.emc_mitglieder_dev.sql.gz
 ```
+
+> [!NOTE]
+> Die dedizierte Test-Datenbank (`emc_mitglieder_test`) ist nicht Bestandteil des regulären Backup-Konzepts.
 
 ---
 

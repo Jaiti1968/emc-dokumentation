@@ -82,7 +82,7 @@
     - [9.2 Frontend Rollback](#92-frontend-rollback)
     - [9.3 Backend Rollback](#93-backend-rollback)
     - [9.4 Datenbank Rollback](#94-datenbank-rollback)
-    - [9.5 Zukünftige Archivstrategie](#95-zukünftige-archivstrategie)
+    - [9.5 Aktuelle Archivstrategie](#95-aktuelle-archivstrategie)
   - [10. Typische Fehlerquellen](#10-typische-fehlerquellen)
     - [10.1 Falscher NAS Pfad](#101-falscher-nas-pfad)
     - [10.2 Rechteprobleme](#102-rechteprobleme)
@@ -1341,6 +1341,9 @@ Verbindlicher Ablauf:
 
 ```text
 Entwicklung
+→ relevante Tests erfolgreich
+→ vollständige Testsuite erfolgreich
+→ Projektdokumentation aktualisieren
 → lokaler Build
 → DEV Deployment
 → DEV Smoke Test
@@ -1357,19 +1360,23 @@ Entwicklung
 
 1. lokale Änderungen abschließen
 
-2. Frontend Build:
+2. Tests durchführen (falls betroffen)
+
+3. Projektdokumentation aktualisieren
+
+4. Frontend Build:
 
 ```bash
 npm run build
 ```
 
-3. DEV Deployment
+5. DEV Deployment
 
-4. DEV Smoke Test
+6. DEV Smoke Test
 
-5. PROD Deployment
+7. PROD Deployment
 
-6. PROD Smoke Test
+8. PROD Smoke Test
 
 ---
 
@@ -1377,19 +1384,25 @@ npm run build
 
 1. lokale Änderungen abschließen
 
-2. Backend Build:
+2. relevante Backend Tests durchführen
+
+3. vollständige Testsuite erfolgreich
+
+4. Projektdokumentation aktualisieren
+
+5. Backend Build:
 
 ```bash
 mvn clean package
 ```
 
-3. DEV Deployment
+6. DEV Deployment
 
-4. DEV Smoke Test
+7. DEV Smoke Test
 
-5. PROD Deployment
+8. PROD Deployment
 
-6. PROD Smoke Test
+9. PROD Smoke Test
 
 ---
 
@@ -1636,25 +1649,33 @@ Mögliche Maßnahmen:
 
 ---
 
-### 9.5 Zukünftige Archivstrategie
+### 9.5 Aktuelle Archivstrategie
 
-Geplante, aktuell noch nicht umgesetzte Option:
+Deployment-Artefakte werden vor Ersetzung archiviert.
 
-dateibasierte Archivierung früherer Build-Stände.
-
-Beispiel:
+Frontend:
 
 ```text
-/volume1/docker/archive/
+/volume1/docker/build/archive/frontend
 ```
 
-oder:
+Backend:
 
 ```text
-/volume1/docker/build/archive/
+/volume1/docker/build/archive/backend
 ```
 
-Dies vereinfacht spätere Rollbacks.
+Zweck:
+
+- Rollback-Unterstützung
+- technische Nachvollziehbarkeit
+- Artefakt-Historie
+
+Offene spätere Optimierungen:
+
+- Aufbewahrungsstrategie
+- Rotation
+- automatisierte Bereinigung
 
 ---
 

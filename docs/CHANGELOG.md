@@ -200,6 +200,104 @@ Nächste geplante Änderungen werden hier gesammelt.
 
 ---
 
+## [2026-05-25] Backend Testarchitektur abgeschlossen / Projektdokumentation konsolidiert
+
+### Versionen
+
+| Komponente | Version |
+|----------|---------|
+| Frontend | `1.0.0-SNAPSHOT` |
+| Backend | `1.1.1-SNAPSHOT` |
+
+---
+
+### Added
+
+- dedizierter technischer Test-Datenbankbenutzer für Backend Integration Tests
+- vollständige Backend Integration Test-Infrastruktur
+- standardisierte DEV / TEST / PROD Datenbanktrennung in der Projektdokumentation
+- neues Infrastruktur-Backlog für MariaDB Benutzer- und Rechtebereinigung
+
+---
+
+### Changed
+
+- Backend Teststrategie von Planungsstand auf umgesetzten Zustand aktualisiert
+- Projekt-Dokumentation auf aktuellen Architektur- und Betriebsstand konsolidiert
+- Release-Prozess um verpflichtende Dokumentationspflege vor Merge / Deployment ergänzt
+- Projektbacklog bereinigt und auf aktive Themen fokussiert
+
+---
+
+### Technical
+
+| Bereich | Änderung |
+|--------|----------|
+| Backend | Integration-Testarchitektur produktionsnah mit echter MariaDB Test-Datenbank |
+| Backend | dedizierter Test-DB Benutzer `emc_backend_test_rw` |
+| Backend | vollständige Backend Testsuite erfolgreich validiert |
+| Infrastruktur | DEV Deployment erfolgreich validiert |
+| Infrastruktur | Betriebs-/Recovery-Dokumentation konsolidiert |
+| Projektorganisation | verbindliche Doku-Pflege vor Merge etabliert |
+
+---
+
+### Documentation
+
+| Dokument | Änderung |
+|---------|----------|
+| `README.md` | Dokumentstruktur / Projektbeschreibung aktualisiert |
+| `01-installation-betrieb.md` | DEV / TEST / PROD Modell, Sicherheits- und Betriebsstand aktualisiert |
+| `02-deployment.md` | Release-Prozess / Deployment-Ablauf aktualisiert |
+| `04-architektur.md` | Teststrategie, Security, Datenbankmodell, Infrastruktur-Hardening aktualisiert |
+| `05-troubleshooting-backup-restore.md` | Betriebs- und Recovery-Konsistenz aktualisiert |
+| `06-projektbacklog.md` | Backlog konsolidiert / neue Infrastruktur-Themen ergänzt |
+
+---
+
+### Deployment Notes
+
+| Prüfung | Erwartung |
+|--------|-----------|
+| DEV Deployment | erfolgreich |
+| Login | erfolgreich |
+| Mitgliederfunktionen | funktionsfähig |
+| Monitoring | unverändert stabil |
+
+Hinweise:
+
+- kein PROD Deployment durchgeführt
+- keine Runtime-/Funktionsänderung
+- kein Software-Versionssprung erforderlich
+
+---
+
+### Tests
+
+| Bereich | Kommando |
+|--------|----------|
+| Backend Tests | `mvn test` |
+| Backend Integration Tests | erfolgreich |
+| Backend Gesamttestsuite | `66 Tests erfolgreich` |
+| DEV Deployment Validierung | erfolgreich |
+
+---
+
+### Datenbank
+
+| Thema | Status |
+|------|--------|
+| Schemaänderung | Nein |
+| Datenmigration | Nein |
+| manuelles SQL | Ja |
+
+Hinweise:
+
+- dedizierter Test-Datenbankbenutzer angelegt
+- keine Änderungen an PROD-Daten
+
+---
+
 ---
 
 # Vorlage für neue Changelog-Einträge
