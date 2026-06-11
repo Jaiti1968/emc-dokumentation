@@ -1187,6 +1187,10 @@ Prüfen:
 - Suche funktioniert
 - Detailansicht lädt
 - Auto-Save funktioniert
+- /actuator/health liefert Status UP
+- /actuator/health/readiness liefert Status UP
+- /api/system/info liefert korrekte Version
+- /api/system/info liefert korrekte Umgebung (DEV/PROD)
 
 Technisch:
 
@@ -1458,6 +1462,10 @@ Prüfen:
 - Session Restore funktioniert (`/api/auth/me`)
 - API Kommunikation funktioniert
 - keine Serverfehler sichtbar
+- `/actuator/health` liefert HTTP 200
+- `/actuator/health/readiness` liefert HTTP 200
+- `/api/system/info` liefert erwartete Backend-Version
+- `/api/system/info` liefert erwartete Umgebung
 
 ---
 
@@ -1521,12 +1529,43 @@ Beispiel:
 FE v1.0.0-SNAPSHOT | BE v1.1.1-SNAPSHOT
 ```
 
+Zusätzlich prüfen:
+
+Backend SystemInfo:
+
+```json
+{
+  "backendVersion": "...",
+  "environment": "...",
+  "activeProfiles": [...]
+}
+```
+
+Erwartungen:
+
+DEV:
+
+```text
+environment = DEV
+activeProfiles = [dev]
+```
+
+PROD:
+
+```text
+environment = PROD
+activeProfiles = [prod]
+```
+
 Zweck:
 
 - schneller technischer Deployment-Sanity-Check
 - Erkennung falscher Builds
 - Erkennung fehlender Redeployments
 - Erkennung von Frontend-/Backend-Versionsabweichungen
+- Verifikation der Zielumgebung
+- Erkennung fehlerhafter Runtime-Konfiguration
+- Nachweis der korrekten Spring-Profil-Aktivierung
 
 Wenn Versionen nicht erwartungsgemäß erscheinen:
 
