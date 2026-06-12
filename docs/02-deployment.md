@@ -1187,10 +1187,10 @@ Prüfen:
 - Suche funktioniert
 - Detailansicht lädt
 - Auto-Save funktioniert
-- /actuator/health liefert Status UP
-- /actuator/health/readiness liefert Status UP
-- /api/system/info liefert korrekte Version
-- /api/system/info liefert korrekte Umgebung (DEV/PROD)
+- `/actuator/health` liefert Status UP
+- `/actuator/health/readiness` liefert Status UP
+- `/api/system/info` liefert korrekte Version
+- `/api/system/info` liefert korrekte Umgebung (DEV/PROD)
 
 Technisch:
 
@@ -1503,7 +1503,8 @@ Nach Deployment prüfen:
 Uptime Kuma:
 
 - Frontend DEV / PROD
-- Backend DEV / PROD
+- Backend DEV / PROD Health
+- Backend DEV / PROD Readiness
 - Datenbank
 - Infrastruktur
 

@@ -36,20 +36,20 @@ MAJOR.MINOR.PATCH-SNAPSHOT
 
 Beispiele:
 
-| Komponente | Beispiele |
-|----------|------------|
-| Frontend | `1.0.0-SNAPSHOT`, `1.0.0`, `1.0.1-SNAPSHOT` |
-| Backend | `1.1.1-SNAPSHOT`, `1.1.1`, `1.1.2-SNAPSHOT` |
+| Komponente | Beispiele                                   |
+| ---------- | ------------------------------------------- |
+| Frontend   | `1.0.0-SNAPSHOT`, `1.0.0`, `1.0.1-SNAPSHOT` |
+| Backend    | `1.1.1-SNAPSHOT`, `1.1.1`, `1.1.2-SNAPSHOT` |
 
 Bedeutung:
 
-| Bestandteil | Bedeutung |
-|------------|-----------|
-| MAJOR | größere fachliche / architektonische Änderungen |
-| MINOR | funktionale Erweiterungen |
-| PATCH | Fehlerbehebungen / kleinere technische Änderungen |
-| SNAPSHOT | Entwicklungsstand |
-| ohne SNAPSHOT | definierter stabiler Stand |
+| Bestandteil   | Bedeutung                                         |
+| ------------- | ------------------------------------------------- |
+| MAJOR         | größere fachliche / architektonische Änderungen   |
+| MINOR         | funktionale Erweiterungen                         |
+| PATCH         | Fehlerbehebungen / kleinere technische Änderungen |
+| SNAPSHOT      | Entwicklungsstand                                 |
+| ohne SNAPSHOT | definierter stabiler Stand                        |
 
 ---
 
@@ -57,16 +57,16 @@ Bedeutung:
 
 Ein neuer Changelog-Eintrag wird erstellt bei:
 
-| Änderung | Versionsänderung |
-|---------|------------------|
-| Frontend Funktionalität | Frontend |
-| Frontend technische Änderungen mit Nutzerwirkung | Frontend |
-| Backend API Änderungen | Backend |
-| Backend funktionale Änderungen | Backend |
-| Datenbank Schemaänderungen | Backend |
-| Security Änderungen | Backend |
-| Deployment-relevante Änderungen | je nach betroffenem Bereich |
-| reine Dokumentationsänderungen | kein Software-Versionssprung |
+| Änderung                                         | Versionsänderung             |
+| ------------------------------------------------ | ---------------------------- |
+| Frontend Funktionalität                          | Frontend                     |
+| Frontend technische Änderungen mit Nutzerwirkung | Frontend                     |
+| Backend API Änderungen                           | Backend                      |
+| Backend funktionale Änderungen                   | Backend                      |
+| Datenbank Schemaänderungen                       | Backend                      |
+| Security Änderungen                              | Backend                      |
+| Deployment-relevante Änderungen                  | je nach betroffenem Bereich  |
+| reine Dokumentationsänderungen                   | kein Software-Versionssprung |
 
 Hinweis:
 
@@ -96,10 +96,10 @@ Jeder Eintrag dokumentiert soweit relevant:
 
 ### Versionen
 
-| Komponente | Version |
-|----------|---------|
-| Frontend | `1.0.0-SNAPSHOT` |
-| Backend | `1.1.1-SNAPSHOT` |
+| Komponente | Version          |
+| ---------- | ---------------- |
+| Frontend   | `1.0.0-SNAPSHOT` |
+| Backend    | `1.1.1-SNAPSHOT` |
 
 ---
 
@@ -130,40 +130,40 @@ Beispiel:
 
 ### Technical
 
-| Bereich | Änderung |
-|--------|----------|
-| Frontend | Version aus `package.json` |
-| Frontend | Build Injection via Vite |
-| Frontend | `import.meta.env.VITE_APP_VERSION` |
-| Frontend | Anzeige im `EnvironmentBadge` |
-| Backend | Spring Boot Build Metadata aktiviert |
-| Backend | `META-INF/build-info.properties` erzeugt |
-| Backend | neuer System Endpoint |
-| Backend | neuer Test `SystemInfoControllerTest` |
+| Bereich  | Änderung                                 |
+| -------- | ---------------------------------------- |
+| Frontend | Version aus `package.json`               |
+| Frontend | Build Injection via Vite                 |
+| Frontend | `import.meta.env.VITE_APP_VERSION`       |
+| Frontend | Anzeige im `EnvironmentBadge`            |
+| Backend  | Spring Boot Build Metadata aktiviert     |
+| Backend  | `META-INF/build-info.properties` erzeugt |
+| Backend  | neuer System Endpoint                    |
+| Backend  | neuer Test `SystemInfoControllerTest`    |
 
 ---
 
 ### Documentation
 
-| Dokument | Änderung |
-|---------|----------|
-| Backend `README.md` | System Endpoint / Build Metadata |
-| Frontend `README.md` | Versionsanzeige |
-| `README_DEVELOPER.md` | technische Versionsinformationen |
-| `02-deployment.md` | Smoke Test Versionsprüfung |
-| `04-architektur.md` | System API / Architektur |
-| `05-troubleshooting-backup-restore.md` | Fehlerbild Versionsabweichung |
+| Dokument                               | Änderung                         |
+| -------------------------------------- | -------------------------------- |
+| Backend `README.md`                    | System Endpoint / Build Metadata |
+| Frontend `README.md`                   | Versionsanzeige                  |
+| `README_DEVELOPER.md`                  | technische Versionsinformationen |
+| `02-deployment.md`                     | Smoke Test Versionsprüfung       |
+| `04-architektur.md`                    | System API / Architektur         |
+| `05-troubleshooting-backup-restore.md` | Fehlerbild Versionsabweichung    |
 
 ---
 
 ### Deployment Notes
 
-| Prüfung | Erwartung |
-|--------|-----------|
-| Frontend erreichbar | Anwendung lädt |
-| Login | erfolgreich |
-| Frontend-Version | sichtbar / korrekt |
-| Backend-Version | sichtbar / korrekt |
+| Prüfung             | Erwartung          |
+| ------------------- | ------------------ |
+| Frontend erreichbar | Anwendung lädt     |
+| Login               | erfolgreich        |
+| Frontend-Version    | sichtbar / korrekt |
+| Backend-Version     | sichtbar / korrekt |
 
 Beispiel:
 
@@ -175,22 +175,22 @@ FE v1.0.0-SNAPSHOT | BE v1.1.1-SNAPSHOT
 
 ### Tests
 
-| Bereich | Kommando |
-|--------|----------|
-| Backend Tests | `mvn test` |
-| Backend Build | `mvn clean package` |
-| Frontend Tests | `npm test` |
-| Frontend Build | `npm run build` |
+| Bereich        | Kommando            |
+| -------------- | ------------------- |
+| Backend Tests  | `mvn test`          |
+| Backend Build  | `mvn clean package` |
+| Frontend Tests | `npm test`          |
+| Frontend Build | `npm run build`     |
 
 ---
 
 ### Datenbank
 
-| Thema | Status |
-|------|--------|
-| Schemaänderung | Nein |
-| Datenmigration | Nein |
-| manuelles SQL | Nein |
+| Thema          | Status |
+| -------------- | ------ |
+| Schemaänderung | Nein   |
+| Datenmigration | Nein   |
+| manuelles SQL  | Nein   |
 
 ---
 
@@ -204,10 +204,10 @@ Nächste geplante Änderungen werden hier gesammelt.
 
 ### Versionen
 
-| Komponente | Version |
-|----------|---------|
-| Frontend | `1.0.0-SNAPSHOT` |
-| Backend | `1.1.1-SNAPSHOT` |
+| Komponente | Version          |
+| ---------- | ---------------- |
+| Frontend   | `1.0.0-SNAPSHOT` |
+| Backend    | `1.1.1-SNAPSHOT` |
 
 ---
 
@@ -231,38 +231,38 @@ Nächste geplante Änderungen werden hier gesammelt.
 
 ### Technical
 
-| Bereich | Änderung |
-|--------|----------|
-| Backend | Integration-Testarchitektur produktionsnah mit echter MariaDB Test-Datenbank |
-| Backend | dedizierter Test-DB Benutzer `emc_backend_test_rw` |
-| Backend | vollständige Backend Testsuite erfolgreich validiert |
-| Infrastruktur | DEV Deployment erfolgreich validiert |
-| Infrastruktur | Betriebs-/Recovery-Dokumentation konsolidiert |
-| Projektorganisation | verbindliche Doku-Pflege vor Merge etabliert |
+| Bereich             | Änderung                                                                     |
+| ------------------- | ---------------------------------------------------------------------------- |
+| Backend             | Integration-Testarchitektur produktionsnah mit echter MariaDB Test-Datenbank |
+| Backend             | dedizierter Test-DB Benutzer `emc_backend_test_rw`                           |
+| Backend             | vollständige Backend Testsuite erfolgreich validiert                         |
+| Infrastruktur       | DEV Deployment erfolgreich validiert                                         |
+| Infrastruktur       | Betriebs-/Recovery-Dokumentation konsolidiert                                |
+| Projektorganisation | verbindliche Doku-Pflege vor Merge etabliert                                 |
 
 ---
 
 ### Documentation
 
-| Dokument | Änderung |
-|---------|----------|
-| `README.md` | Dokumentstruktur / Projektbeschreibung aktualisiert |
-| `01-installation-betrieb.md` | DEV / TEST / PROD Modell, Sicherheits- und Betriebsstand aktualisiert |
-| `02-deployment.md` | Release-Prozess / Deployment-Ablauf aktualisiert |
-| `04-architektur.md` | Teststrategie, Security, Datenbankmodell, Infrastruktur-Hardening aktualisiert |
-| `05-troubleshooting-backup-restore.md` | Betriebs- und Recovery-Konsistenz aktualisiert |
-| `06-projektbacklog.md` | Backlog konsolidiert / neue Infrastruktur-Themen ergänzt |
+| Dokument                               | Änderung                                                                       |
+| -------------------------------------- | ------------------------------------------------------------------------------ |
+| `README.md`                            | Dokumentstruktur / Projektbeschreibung aktualisiert                            |
+| `01-installation-betrieb.md`           | DEV / TEST / PROD Modell, Sicherheits- und Betriebsstand aktualisiert          |
+| `02-deployment.md`                     | Release-Prozess / Deployment-Ablauf aktualisiert                               |
+| `04-architektur.md`                    | Teststrategie, Security, Datenbankmodell, Infrastruktur-Hardening aktualisiert |
+| `05-troubleshooting-backup-restore.md` | Betriebs- und Recovery-Konsistenz aktualisiert                                 |
+| `06-projektbacklog.md`                 | Backlog konsolidiert / neue Infrastruktur-Themen ergänzt                       |
 
 ---
 
 ### Deployment Notes
 
-| Prüfung | Erwartung |
-|--------|-----------|
-| DEV Deployment | erfolgreich |
-| Login | erfolgreich |
-| Mitgliederfunktionen | funktionsfähig |
-| Monitoring | unverändert stabil |
+| Prüfung              | Erwartung          |
+| -------------------- | ------------------ |
+| DEV Deployment       | erfolgreich        |
+| Login                | erfolgreich        |
+| Mitgliederfunktionen | funktionsfähig     |
+| Monitoring           | unverändert stabil |
 
 Hinweise:
 
@@ -274,27 +274,141 @@ Hinweise:
 
 ### Tests
 
-| Bereich | Kommando |
-|--------|----------|
-| Backend Tests | `mvn test` |
-| Backend Integration Tests | erfolgreich |
-| Backend Gesamttestsuite | `66 Tests erfolgreich` |
-| DEV Deployment Validierung | erfolgreich |
+| Bereich                    | Kommando               |
+| -------------------------- | ---------------------- |
+| Backend Tests              | `mvn test`             |
+| Backend Integration Tests  | erfolgreich            |
+| Backend Gesamttestsuite    | `66 Tests erfolgreich` |
+| DEV Deployment Validierung | erfolgreich            |
 
 ---
 
 ### Datenbank
 
-| Thema | Status |
-|------|--------|
-| Schemaänderung | Nein |
-| Datenmigration | Nein |
-| manuelles SQL | Ja |
+| Thema          | Status |
+| -------------- | ------ |
+| Schemaänderung | Nein   |
+| Datenmigration | Nein   |
+| manuelles SQL  | Ja     |
 
 Hinweise:
 
 - dedizierter Test-Datenbankbenutzer angelegt
 - keine Änderungen an PROD-Daten
+
+---
+
+## [2026-06-12] Backend Healthchecks und Runtime-Umgebungserkennung
+
+### Versionen
+
+| Komponente | Version          |
+| ---------- | ---------------- |
+| Frontend   | `1.0.0-SNAPSHOT` |
+| Backend    | `1.1.2`          |
+
+---
+
+### Added
+
+- Spring Boot Actuator integriert
+- Health Endpoint `/actuator/health`
+- Liveness Endpoint `/actuator/health/liveness`
+- Readiness Endpoint `/actuator/health/readiness`
+- Build-Zeitpunkt in Systeminformationen aufgenommen
+- Runtime-Umgebungserkennung über Spring Profiles
+- Erweiterte Backend-Systeminformationen über `/api/system/info`
+
+---
+
+### Changed
+
+- Backend-Monitoring auf Actuator-basierte Healthchecks erweitert
+- Deployment-Prozess um Healthcheck- und Environment-Prüfungen ergänzt
+- DEV- und PROD-Umgebungen verwenden explizite Spring-Profile
+- SystemInfo-Endpunkt liefert zusätzliche Betriebsinformationen
+
+---
+
+### Technical
+
+| Bereich       | Änderung                                                                   |
+| ------------- | -------------------------------------------------------------------------- |
+| Backend       | Spring Boot Actuator aktiviert                                             |
+| Backend       | Health-, Liveness- und Readiness-Probes eingeführt                         |
+| Backend       | Datenbankverfügbarkeit in Readiness integriert                             |
+| Backend       | Build-Time über Build Metadata verfügbar                                   |
+| Backend       | Environment-Erkennung über `SPRING_PROFILES_ACTIVE`                        |
+| Backend       | `/api/system/info` erweitert um Environment, aktive Profile und Build-Zeit |
+| Backend       | Security-Konfiguration für öffentliche Health-Endpunkte angepasst          |
+| Backend       | zusätzliche Controller-Tests ergänzt                                       |
+| Infrastruktur | Uptime Kuma Monitoring für DEV und PROD erweitert                          |
+| Infrastruktur | Backend-Monitoring auf Actuator-Healthchecks umgestellt                    |
+
+---
+
+### Documentation
+
+| Dokument                        | Änderung                                                 |
+| ------------------------------- | -------------------------------------------------------- |
+| `README.md`                     | Backend Healthchecks und SystemInfo dokumentiert         |
+| `02-deployment.md`              | Healthchecks, Environment-Prüfung und Monitoring ergänzt |
+| EMC-INFRA `stack-inventory.md`  | DEV/PROD Health- und Readiness-Monitoring dokumentiert   |
+| EMC-INFRA `infra-governance.md` | Actuator-Monitoring als Betriebsstandard ergänzt         |
+
+---
+
+### Deployment Notes
+
+| Prüfung                      | Erwartung            |
+| ---------------------------- | -------------------- |
+| `/actuator/health`           | HTTP 200 / Status UP |
+| `/actuator/health/readiness` | HTTP 200 / Status UP |
+| Backend-Version              | korrekt              |
+| Environment DEV              | `DEV`                |
+| Environment PROD             | `PROD`               |
+| Uptime Kuma Health           | UP                   |
+| Uptime Kuma Readiness        | UP                   |
+
+Zusätzliche Hinweise:
+
+- Für DEV ist `SPRING_PROFILES_ACTIVE=dev` erforderlich.
+- Für PROD ist `SPRING_PROFILES_ACTIVE=prod` erforderlich.
+- Bei Portainer-Stacks müssen neue Environment-Variablen zusätzlich in den Stack-Variablen gepflegt werden.
+- Health- und Readiness-Endpunkte sind bewusst ohne Authentifizierung erreichbar.
+
+---
+
+### Tests
+
+| Bereich                     | Kommando               |
+| --------------------------- | ---------------------- |
+| Backend Tests               | `mvn test`             |
+| Backend Build               | `mvn clean package`    |
+| Backend Gesamttestsuite     | `69 Tests erfolgreich` |
+| DEV Deployment Validierung  | erfolgreich            |
+| PROD Deployment Validierung | erfolgreich            |
+| Healthchecks                | erfolgreich            |
+| Monitoring Validierung      | erfolgreich            |
+
+---
+
+### Datenbank
+
+| Thema          | Status |
+| -------------- | ------ |
+| Schemaänderung | Nein   |
+| Datenmigration | Nein   |
+| manuelles SQL  | Nein   |
+
+Hinweise:
+
+- Keine Änderungen am Datenbankschema.
+- Readiness berücksichtigt die Erreichbarkeit der MariaDB-Datenbank.
+
+### Offene Folgepunkte
+
+- Frontend-Anforderung zur Anzeige der Backend-Laufzeitumgebung (`LOCAL` / `DEV` / `PROD`) aus `/api/system/info` in das Projektbacklog aufnehmen.
 
 ---
 
@@ -309,10 +423,10 @@ Hinweise:
 
 ### Versionen
 
-| Komponente | Version |
-|----------|---------|
-| Frontend | `X.Y.Z-SNAPSHOT` |
-| Backend | `A.B.C-SNAPSHOT` |
+| Komponente | Version          |
+| ---------- | ---------------- |
+| Frontend   | `X.Y.Z-SNAPSHOT` |
+| Backend    | `A.B.C-SNAPSHOT` |
 
 ---
 
@@ -339,29 +453,29 @@ Hinweise:
 
 ### Technical
 
-| Bereich | Änderung |
-|--------|----------|
+| Bereich  | Änderung     |
+| -------- | ------------ |
 | Frontend | Beschreibung |
-| Backend | Beschreibung |
+| Backend  | Beschreibung |
 
 ---
 
 ### Documentation
 
-| Dokument | Änderung |
-|---------|----------|
-| `README.md` | Beschreibung |
+| Dokument           | Änderung     |
+| ------------------ | ------------ |
+| `README.md`        | Beschreibung |
 | `02-deployment.md` | Beschreibung |
 
 ---
 
 ### Deployment Notes
 
-| Prüfung | Erwartung |
-|--------|-----------|
-| Frontend erreichbar | OK |
-| Login | OK |
-| Versionen sichtbar | korrekt |
+| Prüfung             | Erwartung |
+| ------------------- | --------- |
+| Frontend erreichbar | OK        |
+| Login               | OK        |
+| Versionen sichtbar  | korrekt   |
 
 Zusätzliche Hinweise:
 
@@ -373,20 +487,20 @@ Zusätzliche Hinweise:
 
 ### Tests
 
-| Bereich | Kommando |
-|--------|----------|
-| Backend | `mvn test` |
+| Bereich  | Kommando   |
+| -------- | ---------- |
+| Backend  | `mvn test` |
 | Frontend | `npm test` |
 
 ---
 
 ### Datenbank
 
-| Thema | Status |
-|------|--------|
+| Thema          | Status    |
+| -------------- | --------- |
 | Schemaänderung | Ja / Nein |
 | Datenmigration | Ja / Nein |
-| manuelles SQL | Ja / Nein |
+| manuelles SQL  | Ja / Nein |
 
 Hinweise:
 
