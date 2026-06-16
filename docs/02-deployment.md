@@ -23,22 +23,29 @@
     - [3.7 Keine Container-Manipulation](#37-keine-container-manipulation)
   - [4. Frontend Deployment](#4-frontend-deployment)
     - [4.1 Übersicht](#41-übersicht)
-    - [4.2 Lokaler Build](#42-lokaler-build)
-    - [4.3 Zielpfade](#43-zielpfade)
-    - [4.4 Transfer auf NAS](#44-transfer-auf-nas)
-      - [Vorheriges Frontend-Artefakt prüfen](#vorheriges-frontend-artefakt-prüfen)
-      - [Vorheriges Frontend-Artefakt archivieren](#vorheriges-frontend-artefakt-archivieren)
-      - [Zielverzeichnis bereinigen](#zielverzeichnis-bereinigen)
-      - [Neues Frontend-Artefakt übertragen](#neues-frontend-artefakt-übertragen)
-      - [Rechte korrigieren](#rechte-korrigieren)
-      - [Übertragung prüfen](#übertragung-prüfen)
-      - [Container aktualisieren](#container-aktualisieren)
-    - [4.5 Portainer Deployment](#45-portainer-deployment)
-    - [4.6 Frontend Smoke Test](#46-frontend-smoke-test)
-    - [4.7 Typische Frontend Fehler](#47-typische-frontend-fehler)
-      - [Leere Seite](#leere-seite)
+    - [4.2 Versionsvorbereitung](#42-versionsvorbereitung)
+    - [4.3 Lokaler Build](#43-lokaler-build)
+    - [4.4 Docker Image Build](#44-docker-image-build)
+      - [DEV Build](#dev-build)
+      - [PROD Build](#prod-build)
+    - [4.5 Image Archivierung](#45-image-archivierung)
+      - [DEV](#dev)
+      - [PROD](#prod)
+    - [4.6 Transfer auf NAS](#46-transfer-auf-nas)
+      - [DEV](#dev-1)
+      - [PROD](#prod-1)
+    - [4.7 Image Import auf NAS](#47-image-import-auf-nas)
+      - [DEV](#dev-2)
+      - [PROD](#prod-2)
+    - [4.8 Portainer Deployment](#48-portainer-deployment)
+      - [Deployment-Konfiguration prüfen](#deployment-konfiguration-prüfen)
+    - [4.9 Frontend Smoke Test](#49-frontend-smoke-test)
+    - [4.10 Typische Frontend Fehler](#410-typische-frontend-fehler)
+      - [Falsche Versionsanzeige](#falsche-versionsanzeige)
+      - [Container startet nicht](#container-startet-nicht)
+      - [exec format error](#exec-format-error)
+      - [Falsche Backend-Umgebung](#falsche-backend-umgebung)
       - [Alte Version sichtbar](#alte-version-sichtbar)
-      - [API Fehler](#api-fehler)
   - [5. Backend Deployment](#5-backend-deployment)
     - [5.1 Übersicht](#51-übersicht)
     - [5.2 Lokaler Build](#52-lokaler-build)
@@ -51,12 +58,14 @@
       - [Neues Artefakt übertragen](#neues-artefakt-übertragen)
       - [Docker Build Bezug](#docker-build-bezug)
     - [5.6 Docker Build](#56-docker-build)
+      - [Deployment-Konfiguration prüfen](#deployment-konfiguration-prüfen-1)
     - [5.7 Portainer Deployment](#57-portainer-deployment)
     - [5.8 Backend Smoke Test](#58-backend-smoke-test)
     - [5.9 Typische Backend Fehler](#59-typische-backend-fehler)
-      - [Container startet nicht](#container-startet-nicht)
+      - [Container startet nicht](#container-startet-nicht-1)
       - [Datenbankverbindung schlägt fehl](#datenbankverbindung-schlägt-fehl)
       - [Falscher Code läuft](#falscher-code-läuft)
+      - [Falsche Version läuft](#falsche-version-läuft)
   - [6. Datenbankänderungen](#6-datenbankänderungen)
     - [6.1 Grundprinzip](#61-grundprinzip)
     - [6.2 Typische Datenbankänderungen](#62-typische-datenbankänderungen)
@@ -251,16 +260,21 @@ Frontend PROD:
 Struktur je Umgebung:
 
 ```text
-dist/
-nginx.conf
+image/
+```
+
+Beispiel:
+
+```text
+image/
+└── emc-mitglieder-frontend-1.1.1.tar
 ```
 
 Bedeutung:
 
-| Element      | Zweck                               |
-| ------------ | ----------------------------------- |
-| `dist/`      | gebautes React/Vite Frontend        |
-| `nginx.conf` | nginx Konfiguration inkl. API Proxy |
+| Element  | Zweck                                           |
+| -------- | ----------------------------------------------- |
+| `image/` | Docker Image Archiv für Deployment und Rollback |
 
 ---
 
@@ -415,28 +429,78 @@ Deployments erfolgen ausschließlich über:
 
 ## 4. Frontend Deployment
 
-Dieses Kapitel beschreibt den standardisierten Deployment-Prozess für das React-Frontend.
+Dieses Kapitel beschreibt den standardisierten image-basierten Deployment-Prozess für das React-Frontend.
 
 ---
 
 ### 4.1 Übersicht
 
-Frontend Deployment erfolgt über statische Build-Artefakte.
+Frontend Deployment erfolgt image-basiert.
 
 Prinzip:
 
 ```text
-lokaler Windows Build
-→ dist auf NAS kopieren
-→ Portainer Frontend Stack redeployen
+Versionsprüfung
+→ lokaler Build
+→ Docker Image Build
+→ Docker Image Export
+→ Transfer auf NAS
+→ Docker Image Import
+→ Portainer Redeploy
 → Smoke Test
+```
+
+DEV verwendet Snapshot-Versionen:
+
+```text
+X.Y.Z-SNAPSHOT
+```
+
+PROD verwendet Release-Versionen:
+
+```text
+X.Y.Z
+```
+
+Frontend Images werden für die NAS-Zielplattform gebaut:
+
+```text
+linux/arm64
 ```
 
 ---
 
-### 4.2 Lokaler Build
+### 4.2 Versionsvorbereitung
 
-Im Frontend-Projekt lokal unter Windows:
+Die Frontend-Version wird aus der Datei `package.json` übernommen.
+
+Beispiel Entwicklungsstand:
+
+```json
+"version": "1.1.2-SNAPSHOT"
+```
+
+Beispiel Release:
+
+```json
+"version": "1.1.1"
+```
+
+Wichtiger Hinweis:
+
+Die Versionsanzeige im Frontend wird zum Build-Zeitpunkt aus `package.json` erzeugt.
+
+Vor jedem Release-Build muss die Version daher geprüft werden.
+
+Nach Abschluss eines Releases wird die Entwicklungsversion auf die nächste Snapshot-Version angehoben.
+
+---
+
+### 4.3 Lokaler Build
+
+Frontend-Projekt lokal unter Windows öffnen.
+
+Build ausführen:
 
 ```bash
 npm run build
@@ -446,343 +510,256 @@ Erwartetes Ergebnis:
 
 ```text
 dist/
-```
-
-Beispiel:
-
-```text
-dist/
 ├── assets/
 ├── index.html
 ├── favicon.svg
 └── icons.svg
 ```
 
----
+Hinweis:
 
-### 4.3 Zielpfade
+Für die nachfolgenden Docker-Schritte muss Docker Desktop gestartet sein.
 
-DEV:
+Prüfung:
 
-```text
-/volume1/docker/build/mitglieder-frontend-dev/dist
-```
-
-PROD:
-
-```text
-/volume1/docker/build/mitglieder-frontend-prod/dist
-```
-
-Zusätzliche Konfiguration:
-
-DEV:
-
-```text
-/volume1/docker/build/mitglieder-frontend-dev/nginx.conf
-```
-
-PROD:
-
-```text
-/volume1/docker/build/mitglieder-frontend-prod/nginx.conf
+```powershell
+docker version
 ```
 
 ---
 
-### 4.4 Transfer auf NAS
+### 4.4 Docker Image Build
 
-Lokale Frontend Build-Artefakte werden kontrolliert auf das NAS übertragen.
+Das Frontend verwendet unterschiedliche nginx-Konfigurationen:
 
-Nach lokalem Build:
+```text
+docker/nginx-local.conf
+docker/nginx-dev.conf
+docker/nginx-prod.conf
+```
+
+#### DEV Build
 
 ```bash
-npm run build
+docker build \
+  --platform linux/arm64 \
+  --build-arg NGINX_CONF=nginx-dev.conf \
+  -t emc-mitglieder-frontend:1.1.2-SNAPSHOT .
 ```
 
-entsteht lokal:
+#### PROD Build
 
-```text
-dist/
+```bash
+docker build \
+  --platform linux/arm64 \
+  --build-arg NGINX_CONF=nginx-prod.conf \
+  -t emc-mitglieder-frontend:1.1.1 .
 ```
 
-Dieses Verzeichnis wird vollständig auf das NAS übertragen.
+Wichtiger Hinweis:
 
-DEV Ziel:
+Ohne die Plattformangabe
 
 ```text
-/volume1/docker/build/mitglieder-frontend-dev/dist
+--platform linux/arm64
 ```
 
-PROD Ziel:
+kann das Image auf dem NAS nicht gestartet werden.
+
+Typischer Fehler:
 
 ```text
-/volume1/docker/build/mitglieder-frontend-prod/dist
+exec /docker-entrypoint.sh: exec format error
 ```
 
 ---
 
-#### Vorheriges Frontend-Artefakt prüfen
+### 4.5 Image Archivierung
 
-DEV:
+Frontend Images werden lokal archiviert.
 
-```bash
-ls -lh /volume1/docker/build/mitglieder-frontend-dev
-```
+Verzeichnis:
 
-PROD:
-
-```bash
-ls -lh /volume1/docker/build/mitglieder-frontend-prod
-```
-
----
-
-#### Vorheriges Frontend-Artefakt archivieren
-
-Archivverzeichnis sicherstellen:
-
-```bash
-mkdir -p /volume1/docker/build/archive/frontend
-```
-
-Zeitstempel erzeugen:
-
-```bash
-TIMESTAMP=$(date +%Y-%m-%d_%H-%M)
-```
-
-Wichtig:
-
-Das bestehende `dist` Verzeichnis darf bei laufendem Container **nicht per `mv` verschoben** werden.
-
-Grund:
-
-Der nginx Container verwendet einen Bind Mount auf dieses Verzeichnis.
-
-Ein Verschieben würde dazu führen, dass der laufende Container weiterhin auf das alte Verzeichnis zeigt.
-
-Deshalb vollständige Kopie erstellen.
-
-DEV:
-
-```bash
-if [ -d /volume1/docker/build/mitglieder-frontend-dev/dist ]; then
-  cp -a /volume1/docker/build/mitglieder-frontend-dev/dist \
-        /volume1/docker/build/archive/frontend/dist-dev-${TIMESTAMP}
-fi
-```
-
-PROD:
-
-```bash
-if [ -d /volume1/docker/build/mitglieder-frontend-prod/dist ]; then
-  cp -a /volume1/docker/build/mitglieder-frontend-prod/dist \
-        /volume1/docker/build/archive/frontend/dist-prod-${TIMESTAMP}
-fi
+```text
+docker-image-archive/
 ```
 
 Beispiel:
 
 ```text
-dist
+docker-image-archive/
+├── emc-mitglieder-frontend-1.1.1.tar
+└── emc-mitglieder-frontend-1.1.1-SNAPSHOT.tar
 ```
 
-wird archiviert als:
+Image exportieren:
 
-```text
-dist-dev-2026-05-23_20-15
+#### DEV
+
+```bash
+docker save -o docker-image-archive/emc-mitglieder-frontend-1.1.2-SNAPSHOT.tar emc-mitglieder-frontend:1.1.2-SNAPSHOT
+```
+
+#### PROD
+
+```bash
+docker save -o docker-image-archive/emc-mitglieder-frontend-1.1.1.tar emc-mitglieder-frontend:1.1.1
 ```
 
 Ziel:
 
-- vollständige Frontend-Historie
-- Rollback-Möglichkeit
-- kein Bind-Mount-Problem
+- nachvollziehbare Deployment-Historie
+- Rollback-Unterstützung
+- reproduzierbare Deployments
 
 ---
 
-#### Zielverzeichnis bereinigen
+### 4.6 Transfer auf NAS
 
-Nach erfolgreicher Archivierung Inhalte des bestehenden `dist` Verzeichnisses entfernen.
-
-DEV:
-
-```bash
-rm -rf /volume1/docker/build/mitglieder-frontend-dev/dist/*
-```
-
-PROD:
-
-```bash
-rm -rf /volume1/docker/build/mitglieder-frontend-prod/dist/*
-```
-
-Kontrolle:
+Zielverzeichnisse:
 
 DEV:
-
-```bash
-ls -lh /volume1/docker/build/mitglieder-frontend-dev/dist
-```
-
-PROD:
-
-```bash
-ls -lh /volume1/docker/build/mitglieder-frontend-prod/dist
-```
-
-Das `dist` Verzeichnis selbst bleibt bestehen.
-
-Nur dessen Inhalt wird ersetzt.
-
----
-
-#### Neues Frontend-Artefakt übertragen
-
-> [!NOTE]
-> Die folgenden SCP-Beispiele setzen voraus, dass die lokale PowerShell im Frontend-Projektverzeichnis geöffnet ist.
->
-> Beispiel:
->
-> ```text
-> C:\Users\Joerg\IdeaProjects\mitglieder-frontend
-> ```
->
-> Andernfalls müssen absolute oder angepasste lokale Pfade verwendet werden.
-
-Beispiel via SCP (Windows PowerShell):
-
-DEV:
-
-```powershell
-scp -r dist/* JaitiNissi1968@NAS-DH2300-C64C:/volume1/docker/build/mitglieder-frontend-dev/dist/
-```
-
-PROD:
-
-```powershell
-scp -r dist/* JaitiNissi1968@NAS-DH2300-C64C:/volume1/docker/build/mitglieder-frontend-prod/dist/
-```
-
----
-
-#### Rechte korrigieren
-
-Nach SCP Transfer Verzeichnisrechte korrigieren.
-
-Grund:
-
-Lokale Windows/SCP Rechte können dazu führen, dass nginx keinen Zugriff auf das Frontend erhält.
-
-Typischer Fehler:
 
 ```text
-500 Internal Server Error
-Permission denied
-stat() "/usr/share/nginx/html/index.html"
-```
-
-Korrektur:
-
-DEV:
-
-```bash
-chmod -R 755 /volume1/docker/build/mitglieder-frontend-dev/dist
+/volume1/docker/build/mitglieder-frontend-dev/image
 ```
 
 PROD:
 
-```bash
-chmod -R 755 /volume1/docker/build/mitglieder-frontend-prod/dist
+```text
+/volume1/docker/build/mitglieder-frontend-prod/image
 ```
 
----
+#### DEV
 
-#### Übertragung prüfen
-
-DEV:
-
-```bash
-ls -lh /volume1/docker/build/mitglieder-frontend-dev/dist
+```powershell
+scp .\docker-image-archive\emc-mitglieder-frontend-1.1.2-SNAPSHOT.tar `
+JaitiNissi1968@NAS-DH2300-C64C:/volume1/docker/build/mitglieder-frontend-dev/image/
 ```
 
-PROD:
+#### PROD
+
+```powershell
+scp .\docker-image-archive\emc-mitglieder-frontend-1.1.1.tar `
+JaitiNissi1968@NAS-DH2300-C64C:/volume1/docker/build/mitglieder-frontend-prod/image/
+```
+
+Übertragung prüfen:
 
 ```bash
-ls -lh /volume1/docker/build/mitglieder-frontend-prod/dist
+ls -lh /volume1/docker/build/mitglieder-frontend-prod/image
 ```
 
 Erwartet:
 
 ```text
-assets/
-index.html
-favicon.svg
-icons.svg
+emc-mitglieder-frontend-1.1.1.tar
 ```
 
 ---
 
-#### Container aktualisieren
+### 4.7 Image Import auf NAS
 
-Frontend Container neu deployen.
+#### DEV
 
-Portainer:
+```bash
+docker load -i /volume1/docker/build/mitglieder-frontend-dev/image/emc-mitglieder-frontend-1.1.2-SNAPSHOT.tar
+```
+
+#### PROD
+
+```bash
+docker load -i /volume1/docker/build/mitglieder-frontend-prod/image/emc-mitglieder-frontend-1.1.1.tar
+```
+
+Kontrolle:
+
+```bash
+docker images emc-mitglieder-frontend
+```
+
+Erwartet:
 
 ```text
-Frontend DEV / PROD Stack
-→ Redeploy
+emc-mitglieder-frontend:1.1.2-SNAPSHOT
+emc-mitglieder-frontend:1.1.1
 ```
 
 ---
 
-> [!WARNING]
-> Frontend-Artefakte immer vollständig ersetzen.
+### 4.8 Portainer Deployment
 
-Nicht zulässig:
+Portainer öffnen.
 
-- selektive Einzeldateien austauschen
-- dist per `mv` bei laufendem Container verschieben
-- Rechteprobleme ignorieren
-
----
-
-### 4.5 Portainer Deployment
-
-Frontend verwendet keine eigenen Images.
-
-Das Frontend läuft als nginx Container mit Bind Mounts.
-
-DEV Mounts:
+Stack auswählen:
 
 ```text
-/volume1/docker/build/mitglieder-frontend-dev/dist
-→ /usr/share/nginx/html
-
-/volume1/docker/build/mitglieder-frontend-dev/nginx.conf
-→ /etc/nginx/conf.d/default.conf
+emc-mitglieder-frontend-dev
 ```
 
-PROD Mounts:
+oder
 
 ```text
-/volume1/docker/build/mitglieder-frontend-prod/dist
-→ /usr/share/nginx/html
-
-/volume1/docker/build/mitglieder-frontend-prod/nginx.conf
-→ /etc/nginx/conf.d/default.conf
+emc-mitglieder-frontend-prod
 ```
 
-Deployment:
+#### Deployment-Konfiguration prüfen
 
-Portainer öffnen
+Vor jedem Redeploy muss geprüft werden, dass die gewünschte Image-Version sowohl in der Compose-Datei als auch im Portainer Stack eingetragen ist.
 
-entsprechenden Stack auswählen:
+Quelle:
 
-- Frontend DEV
-  oder
-- Frontend PROD
+```text
+/volume1/docker/compose/emc-mitglieder-frontend-dev/docker-compose.yml
+
+/volume1/docker/compose/emc-mitglieder-frontend-prod/docker-compose.yml
+```
+
+Beispiel DEV:
+
+```yaml
+image: emc-mitglieder-frontend:1.1.2-SNAPSHOT
+```
+
+Beispiel PROD:
+
+```yaml
+image: emc-mitglieder-frontend:1.1.1
+```
+
+Zusätzlich prüfen:
+
+Portainer
+→ Stack
+→ Editor
+
+EMC-INFRA
+→ compose
+→ emc-mitglieder-frontend-dev oder emc-mitglieder-frontend-prod
+→ docker-compose.yml
+
+Bei Versionswechseln ist die Image-Version in
+
+- EMC-INFRA
+- der NAS-Compose-Datei
+- der Portainer Stack Definition
+
+konsistent anzupassen.
+
+Erst danach darf ein Redeploy durchgeführt werden.
+
+Kontrolle:
+
+```bash
+docker ps --format "table {{.Names}}\t{{.Image}}"
+```
+
+Erwartet:
+
+```text
+emc-mitglieder-frontend-dev    emc-mitglieder-frontend:1.1.2-SNAPSHOT
+emc-mitglieder-frontend-prod   emc-mitglieder-frontend:1.1.1
+```
 
 Aktion:
 
@@ -790,45 +767,102 @@ Aktion:
 Redeploy
 ```
 
+Nach dem Redeploy prüfen:
+
+```bash
+docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}" | grep frontend
+```
+
+Optional:
+
+```bash
+docker logs emc-mitglieder-frontend-prod --tail 30
+```
+
 ---
 
-### 4.6 Frontend Smoke Test
+### 4.9 Frontend Smoke Test
 
 Nach Deployment prüfen:
 
 - Loginseite lädt
-- CSS / JS Assets laden korrekt
+- CSS wird korrekt geladen
+- JavaScript wird korrekt geladen
 - Navigation funktioniert
 - API Kommunikation funktioniert
-- Login möglich
+- Login funktioniert
 - Mitgliederliste lädt
-- Detailseite öffnet
+- Frontend-Version korrekt
+- Backend-Version korrekt
 
-Optional technisch:
+Zusätzlich:
 
-Container Logs prüfen:
+Browserseite einmal neu laden.
 
-```bash
-docker logs emc-mitglieder-frontend-dev --tail 50
+Grund:
+
+Der Browser kann JavaScript-Bundles aus dem Cache verwenden.
+
+---
+
+### 4.10 Typische Frontend Fehler
+
+#### Falsche Versionsanzeige
+
+Mögliche Ursache:
+
+```text
+package.json enthält noch eine Snapshot-Version
 ```
 
-oder:
+Prüfung:
 
-```bash
-docker logs emc-mitglieder-frontend-prod --tail 50
+```json
+"version": "1.1.1"
 ```
 
 ---
 
-### 4.7 Typische Frontend Fehler
+#### Container startet nicht
 
-#### Leere Seite
+Prüfung:
+
+```bash
+docker logs emc-mitglieder-frontend-prod
+```
+
+---
+
+#### exec format error
 
 Mögliche Ursache:
 
-- dist unvollständig
-- falscher Zielpfad
-- nginx Mount falsch
+```text
+Image nicht für linux/arm64 gebaut
+```
+
+Typischer Fehler:
+
+```text
+exec /docker-entrypoint.sh: exec format error
+```
+
+---
+
+#### Falsche Backend-Umgebung
+
+Mögliche Ursache:
+
+```text
+falsche nginx-Konfiguration verwendet
+```
+
+Prüfen:
+
+```text
+nginx-dev.conf
+nginx-prod.conf
+```
 
 ---
 
@@ -836,30 +870,14 @@ Mögliche Ursache:
 
 Mögliche Ursache:
 
-- Browser Cache
-- dist nicht vollständig ersetzt
-- falscher Deployment-Pfad
-
----
-
-#### API Fehler
-
-Mögliche Ursache:
-
-- nginx.conf falsch
-- Backend Container nicht erreichbar
-- Proxy Ziel falsch
-
-DEV:
-
 ```text
-emc-mitglieder-backend-dev
+Browser Cache
 ```
 
-PROD:
+Maßnahme:
 
 ```text
-emc-mitglieder-backend-prod
+Seite neu laden
 ```
 
 ---
@@ -879,8 +897,9 @@ Prinzip:
 ```text
 lokaler Windows Maven Build
 → JAR auf NAS kopieren
-→ Docker Image bauen
-→ Portainer Backend Stack redeployen
+→ Docker Image Build
+→ Deployment-Konfiguration prüfen
+→ Portainer Backend Stack Redeploy
 → Smoke Test
 ```
 
@@ -1155,9 +1174,53 @@ cd /volume1/docker/build/mitglieder-backend-prod
 docker build -t emc-mitglieder-backend:prod .
 ```
 
+#### Deployment-Konfiguration prüfen
+
+Vor jedem Redeploy muss geprüft werden, dass die gewünschte Image-Version sowohl in der Compose-Datei als auch im Portainer Stack eingetragen ist.
+
+Zusätzlich prüfen:
+
+Portainer
+→ Stack
+→ Editor
+
+EMC-INFRA
+→ compose
+→ emc-mitglieder-backend-dev oder emc-mitglieder-backend-prod
+→ docker-compose.yml
+
+NAS
+→ /volume1/docker/compose
+→ emc-mitglieder-backend-dev oder emc-mitglieder-backend-prod
+→ docker-compose.yml
+
+Die dort hinterlegte Compose-Konfiguration muss identisch sein.
+
+Bei Versionswechseln ist die Image-Version in
+
+- EMC-INFRA
+- der NAS-Compose-Datei
+- der Portainer Stack Definition
+
+konsistent anzupassen.
+
+Erst danach darf ein Redeploy durchgeführt werden.
+
+Kontrolle:
+
+```bash
+docker ps --format "table {{.Names}}\t{{.Image}}"
+```
+
 ---
 
 ### 5.7 Portainer Deployment
+
+Voraussetzung:
+
+- gewünschtes Docker Image vorhanden
+- Compose-Dateien aktualisiert
+- Portainer Stack Definition aktualisiert
 
 Nach erfolgreichem Image Build:
 
@@ -1247,6 +1310,19 @@ Mögliche Ursache:
 - falscher Tag verwendet
 
 ---
+
+#### Falsche Version läuft
+
+Möglich Ursache
+
+- docker-compose.yml referenziert eine andere Image-Version
+
+Prüfen:
+
+- EMC-INFRA
+- NAS Compose
+- Portainer Stack
+- Docker Image
 
 ## 6. Datenbankänderungen
 
@@ -1364,23 +1440,31 @@ Entwicklung
 
 1. lokale Änderungen abschließen
 
-2. Tests durchführen (falls betroffen)
+2. Tests durchführen
 
 3. Projektdokumentation aktualisieren
 
-4. Frontend Build:
+4. package.json Version prüfen
+
+5. Frontend Build:
 
 ```bash
 npm run build
 ```
 
-5. DEV Deployment
+6. Docker Image Build (linux/arm64)
 
-6. DEV Smoke Test
+7. Docker Image archivieren
 
-7. PROD Deployment
+8. DEV Deployment
 
-8. PROD Smoke Test
+9. DEV Smoke Test
+
+10. PROD Deployment
+
+11. PROD Smoke Test
+
+12. Entwicklungsversion auf nächste Snapshot-Version anheben
 
 ---
 
@@ -1400,13 +1484,15 @@ npm run build
 mvn clean package
 ```
 
-6. DEV Deployment
+6. Deployment-Konfiguration prüfen
 
-7. DEV Smoke Test
+7. DEV Deployment
 
-8. PROD Deployment
+8. DEV Smoke Test
 
-9. PROD Smoke Test
+9. PROD Deployment
+
+10. PROD Smoke Test
 
 ---
 
@@ -1639,9 +1725,13 @@ Möglichkeiten:
 
 Prinzip:
 
-älteres dist wiederherstellen
+älteres Frontend-Image wiederherstellen
 
-danach:
+Beispiel:
+
+docker load -i emc-mitglieder-frontend-<version>.tar
+
+anschließend:
 
 ```text
 Portainer Redeploy
