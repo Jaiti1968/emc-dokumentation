@@ -412,6 +412,116 @@ Hinweise:
 
 ---
 
+## [2026-06-19] Security Hardening und Session-Governance
+
+### Versionen
+
+| Komponente | Version          |
+| ---------- | ---------------- |
+| Frontend   | `1.1.1-SNAPSHOT` |
+| Backend    | `1.1.3-SNAPSHOT` |
+
+---
+
+### Added
+
+- Schutz gegen Deaktivierung des letzten aktiven ADMIN-Benutzers
+- Schutz gegen Herabstufung des letzten aktiven ADMIN-Benutzers
+- Service-Tests für die Benutzerverwaltungslogik
+- Session Timeout Konfiguration
+- PROD-spezifische Cookie-Sicherheitskonfiguration über Spring Profile
+
+---
+
+### Changed
+
+- generische technische Fehler werden gegenüber Clients neutral beantwortet
+- fachliche HTTP-Fehler werden mit Statuscode und fachlicher Fehlermeldung zurückgegeben
+- Session- und Cookie-Governance explizit konfiguriert und dokumentiert
+- Backend-Dokumentation auf aktuellen Sicherheitsstand aktualisiert
+
+---
+
+### Fixed
+
+- ResponseStatusException wird nicht mehr als unerwarteter technischer Fehler behandelt
+- fachliche Konflikte (z. B. letzter ADMIN) werden korrekt als HTTP 409 zurückgegeben
+
+---
+
+### Technical
+
+| Bereich | Änderung                                                   |
+| ------- | ---------------------------------------------------------- |
+| Backend | Schutzlogik für letzten aktiven ADMIN implementiert        |
+| Backend | UserRepository um ADMIN-Prüfungen erweitert                |
+| Backend | AdminUserService um Sicherheitsprüfungen erweitert         |
+| Backend | ResponseStatusException Handler ergänzt                    |
+| Backend | generische Fehlerausgabe gehärtet                          |
+| Backend | Session Timeout auf 30 Minuten konfiguriert                |
+| Backend | Cookie-Konfiguration mit HttpOnly und SameSite=Lax ergänzt |
+| Backend | `Secure=true` im PROD-Profil eingeführt                    |
+| Backend | neuer Test `AdminUserServiceTest`                          |
+| Backend | Testsuite auf 73 Tests erweitert                           |
+
+---
+
+### Documentation
+
+| Dokument    | Änderung                                                                 |
+| ----------- | ------------------------------------------------------------------------ |
+| `README.md` | Security Hardening, Session-Governance und Fehlerbehandlung dokumentiert |
+| `README.md` | Flyway-Nutzungsstatus dokumentiert                                       |
+| `README.md` | Testumfang und Teststand aktualisiert                                    |
+
+---
+
+### Deployment Notes
+
+| Prüfung              | Erwartung                  |
+| -------------------- | -------------------------- |
+| DEV Deployment       | erfolgreich                |
+| Login                | erfolgreich                |
+| Benutzerverwaltung   | funktionsfähig             |
+| letzter ADMIN Schutz | aktiv                      |
+| Systeminformationen  | korrekt                    |
+| Healthchecks         | unverändert funktionsfähig |
+
+Zusätzliche Hinweise:
+
+- DEV Deployment erfolgreich validiert.
+- Der Schutz des letzten aktiven ADMIN wurde fachlich im Frontend geprüft.
+- Fachliche Konflikte werden korrekt als HTTP 409 zurückgegeben.
+- Keine Änderungen an Docker-Compose oder Infrastruktur erforderlich.
+
+---
+
+### Tests
+
+| Bereich                        | Kommando               |
+| ------------------------------ | ---------------------- |
+| Backend Tests                  | `mvn test`             |
+| Backend Build                  | `mvn clean package`    |
+| Backend Gesamttestsuite        | `73 Tests erfolgreich` |
+| DEV Deployment Validierung     | erfolgreich            |
+| Security Hardening Validierung | erfolgreich            |
+
+---
+
+### Datenbank
+
+| Thema          | Status |
+| -------------- | ------ |
+| Schemaänderung | Nein   |
+| Datenmigration | Nein   |
+| manuelles SQL  | Nein   |
+
+Hinweise:
+
+- Keine Änderungen am Datenbankschema.
+- Keine Migrationen erforderlich.
+- Bestehende Benutzerdaten bleiben unverändert.
+
 ---
 
 # Vorlage für neue Changelog-Einträge
