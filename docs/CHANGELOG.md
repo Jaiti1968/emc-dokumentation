@@ -524,6 +524,124 @@ Hinweise:
 
 ---
 
+## [2026-10-26] BL-020 Reporting – Produktivsetzung Release v1.2.0
+
+### Versionen
+
+| Komponente | Version |
+| ---------- | ------- |
+| Frontend   | `1.2.0` |
+| Backend    | `1.2.0` |
+
+---
+
+### Added
+
+- BL-020 Phase 1: Reporting-Grundgerüst mit Berechtigungssteuerung und gemeinsamer Berichtsarchitektur.
+- BL-020 Phase 2: Mitgliederverzeichnis als PDF-Bericht im Querformat.
+- BL-020 Phase 3: Geburtstagsliste als PDF-Bericht im Hochformat.
+- Altersberechnung und farbliche Hervorhebung runder Geburtstage in der Geburtstagsliste.
+- Auswahl der verfügbaren Berichte im Frontend.
+
+---
+
+### Changed
+
+- Reporting-Funktionalität in Frontend und Backend integriert.
+- Gemeinsame PDF-Berichtsstruktur für unterschiedliche Berichtslayouts weiterentwickelt.
+- Frontend und Backend von `1.2.0-SNAPSHOT` auf die Release-Version `1.2.0` umgestellt.
+- PROD-spezifische Session-Cookie-Konfiguration an den derzeitigen HTTP-Betrieb angepasst.
+
+---
+
+### Fixed
+
+- Anmeldeproblem nach dem Backend-PROD-Deployment behoben.
+- Ursache: Session-Cookie mit `Secure=true` wurde beim Zugriff über HTTP nicht an nachfolgende API-Anfragen übertragen.
+- `server.servlet.session.cookie.secure=false` im Backend-PROD-Profil gesetzt.
+
+---
+
+### Technical
+
+| Bereich       | Änderung                                                                           |
+| ------------- | ---------------------------------------------------------------------------------- |
+| Backend       | Reporting-Funktionen für Mitgliederverzeichnis und Geburtstagsliste bereitgestellt |
+| Backend       | Gemeinsame PDF-Berichtsarchitektur weiterentwickelt                                |
+| Backend       | PROD-Session-Cookie-Konfiguration in `application-prod.properties` angepasst       |
+| Frontend      | Reporting-Auswahl und Integration beider PDF-Berichte                              |
+| Frontend      | Produktives ARM64-Docker-Image `emc-mitglieder-frontend:1.2.0` erstellt            |
+| Infrastruktur | Frontend-Compose-Konfigurationen für DEV und PROD aktualisiert                     |
+| Deployment    | Backend- und Frontend-Release mit Git-Tags `v1.2.0` gekennzeichnet                 |
+
+---
+
+### Documentation
+
+| Dokument / Repository | Änderung                                                                                                           |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| BL-020 Phase 1        | Reporting-Grundlagen und Berechtigungskonzept dokumentiert                                                         |
+| BL-020 Phase 2        | Mitgliederverzeichnis und technische Umsetzung dokumentiert                                                        |
+| BL-020 Phase 3        | Geburtstagsliste und technische Umsetzung dokumentiert                                                             |
+| EMC-INFRA             | Frontend-Image-Versionen für DEV und PROD aktualisiert                                                             |
+| `CHANGELOG.md`        | Produktivsetzung von Release `v1.2.0` dokumentiert                                                                 |
+| `02-deployment.md`    | Deployment-, Release- und Rollback-Verfahren einschließlich Archivstrategie und Reporting-Smoke-Tests aktualisiert |
+
+---
+
+### Deployment Notes
+
+| Prüfung                   | Ergebnis           |
+| ------------------------- | ------------------ |
+| Backend PROD `v1.2.0`     | Erfolgreich        |
+| Frontend PROD `v1.2.0`    | Erfolgreich        |
+| Anmeldung                 | Erfolgreich        |
+| Mitgliederübersicht       | Erfolgreich        |
+| Mitgliederverzeichnis PDF | Erfolgreich        |
+| Geburtstagsliste PDF      | Erfolgreich        |
+| Uptime Kuma Monitoring    | Alle Monitore grün |
+| Rollback-Sicherungen      | Vorhanden          |
+
+Zusätzliche Hinweise:
+
+- Backend vor Frontend produktiv gesetzt.
+- Backend-Release `1.1.2` und Frontend-Release `1.1.1` für einen möglichen Rollback gesichert.
+- PROD wird derzeit über HTTP betrieben.
+- Die Einstellung `server.servlet.session.cookie.secure=false` ist für diesen Betriebszustand erforderlich, solange keine HTTPS-Terminierung für den Browserzugriff eingerichtet ist.
+- **Sicherheitshinweis:** Bei einer späteren Umstellung auf HTTPS muss `Secure=true` wieder aktiviert und die Anmeldung erneut getestet werden. Der HTTP-Betrieb sollte auf ein vertrauenswürdiges internes Netzwerk beschränkt bleiben.
+
+---
+
+### Tests
+
+| Bereich                     | Ergebnis             |
+| --------------------------- | -------------------- |
+| Backend `mvn clean verify`  | 99 Tests erfolgreich |
+| Frontend `npm run build`    | Erfolgreich          |
+| Docker-Build Frontend ARM64 | Erfolgreich          |
+| DEV-Funktionstests          | Erfolgreich          |
+| PROD-Anmeldung              | Erfolgreich          |
+| PROD-Mitgliederverzeichnis  | Erfolgreich          |
+| PROD-Geburtstagsliste       | Erfolgreich          |
+| PROD-Monitoring             | Erfolgreich          |
+
+---
+
+### Datenbank
+
+| Thema          | Status                                       |
+| -------------- | -------------------------------------------- |
+| Schemaänderung | Nicht gesondert bestätigt                    |
+| Datenmigration | Nicht gesondert bestätigt                    |
+| manuelles SQL  | Im Rahmen des Deployments nicht durchgeführt |
+
+Hinweise:
+
+- Vor der Produktivsetzung wurde der erfolgreiche PROD-Datenbank-Backup-Lauf kontrolliert.
+- Eine Datenbankmigration war im dokumentierten Deployment-Ablauf nicht erforderlich.
+
+---
+
 # Vorlage für neue Changelog-Einträge
 
 > Diese Vorlage nach oben unterhalb von `## Unreleased` kopieren und anpassen.

@@ -36,6 +36,20 @@ Gleichzeitig wurde empfohlen, die Umsetzung schrittweise vorzunehmen.
 
 # Umsetzungsphasen
 
+Die nachfolgende Phasengliederung dient der fachlichen
+Strukturierung der Reporting-Anforderungen.
+
+Die Phasen 1 bis 3 wurden in dieser Reihenfolge umgesetzt
+und mit Release v1.2.0 produktiv gesetzt.
+
+Für die noch offenen Phasen 4 bis 8 stellt die Nummerierung
+weder eine Priorisierung noch eine verbindliche
+Umsetzungsreihenfolge dar.
+
+Die Reihenfolge und der konkrete Umfang weiterer
+Umsetzungen werden im Rahmen der Projektplanung
+gesondert festgelegt.
+
 ## Phase 1 – Reporting-Grundgerüst
 
 **Status:** Abgeschlossen
@@ -46,13 +60,13 @@ Aufbau der technischen und fachlichen Basis für zukünftige Reports.
 
 ### Inhalte
 
-* Reporting-Menü
-* Reporting-Architektur
-* Berechtigungskonzept
-* Exportgrundlagen
-* API-Struktur
-* gemeinsame Filter- und Selektionsmechanismen
-* gemeinsame Reportdarstellung
+- Reporting-Menü
+- Reporting-Architektur
+- Berechtigungskonzept
+- Exportgrundlagen
+- API-Struktur
+- gemeinsame Filter- und Selektionsmechanismen
+- gemeinsame Reportdarstellung
 
 ### Ergebnis
 
@@ -62,34 +76,74 @@ Wiederverwendbares Fundament für alle weiteren Reportingfunktionen.
 
 ## Phase 2 – Mitgliederverzeichnis
 
-**Status:** Offen
+**Status:** Abgeschlossen (erster Umsetzungsumfang)
 
 ### Ziel
 
-Migration der bestehenden Mitgliederlisten.
+Schrittweise Migration der bestehenden Mitgliederlisten.
 
-### Inhalte
+### Ursprünglich vorgesehene Inhalte
 
-* Mitgliederverzeichnis
-* kompakte Mitgliederliste
-* fortlaufende Mitgliederliste
-* chorbezogene Mitgliederlisten
+- Mitgliederverzeichnis
+- kompakte Mitgliederliste
+- fortlaufende Mitgliederliste
+- chorbezogene Mitgliederlisten
+
+### Umgesetzter Umfang
+
+- Mitgliederverzeichnis als PDF-Bericht im Querformat
+- Integration in die gemeinsame Reporting-Architektur
+- Bereitstellung über Backend und Frontend
+- Berücksichtigung der definierten Berechtigungen
+- Integration in die Berichtsauswahl
+
+### Ergebnis
+
+Der erste fachlich abgegrenzte Umsetzungsumfang wurde
+erfolgreich implementiert und getestet.
+
+Das Mitgliederverzeichnis ist seit dem Release `v1.2.0`
+vom 26.10.2026 produktiv verfügbar.
+
+Weitere ursprünglich vorgesehene Listenvarianten
+sind nicht Bestandteil dieses Releases und bleiben
+für die spätere Reporting-Planung vorgemerkt.
 
 ---
 
 ## Phase 3 – Geburtstagswesen
 
-**Status:** Offen
+**Status:** Abgeschlossen (erster Umsetzungsumfang)
 
 ### Ziel
 
-Migration der Geburtstagsauswertungen.
+Schrittweise Migration der Geburtstagsauswertungen.
 
-### Inhalte
+### Ursprünglich vorgesehene Inhalte
 
-* Geburtstagsliste
-* Altersberechnung
-* Jubiläumsgeburtstage
+- Geburtstagsliste
+- Altersberechnung
+- Jubiläumsgeburtstage
+
+### Umgesetzter Umfang
+
+- Geburtstagsliste als PDF-Bericht im Hochformat
+- Altersberechnung
+- Farbliche Hervorhebung runder Geburtstage
+- Berücksichtigung unbekannter Geburtsdaten
+- Integration in die gemeinsame Reporting-Architektur
+- Integration in die Berichtsauswahl im Frontend
+
+### Ergebnis
+
+Der erste fachlich abgegrenzte Umsetzungsumfang wurde
+erfolgreich implementiert und getestet.
+
+Die Geburtstagsliste ist seit dem Release `v1.2.0`
+vom 26.10.2026 produktiv verfügbar.
+
+Weitergehende Auswertungen des Geburtstagswesens
+können in späteren Reporting-Phasen ergänzt werden.
 
 ---
 
@@ -103,9 +157,9 @@ Auswertung von Vereins- und Chorzugehörigkeiten.
 
 ### Inhalte
 
-* Zugehörigkeitsjahre
-* Jubiläumsjahre
-* Kandidatenlisten
+- Zugehörigkeitsjahre
+- Jubiläumsjahre
+- Kandidatenlisten
 
 ### Hinweis
 
@@ -155,9 +209,9 @@ Ablösung dokumentbasierter Access-Funktionen.
 
 ### Inhalte
 
-* Nutzungsvereinbarungen
-* Serienausgaben
-* zukünftige Dokumentvorlagen
+- Nutzungsvereinbarungen
+- Serienausgaben
+- zukünftige Dokumentvorlagen
 
 ---
 
@@ -165,9 +219,9 @@ Ablösung dokumentbasierter Access-Funktionen.
 
 Nicht Bestandteil von BL-020:
 
-* Ehrungsverwaltung
-* Funktionenverwaltung
-* Verteilerverwaltung
+- Ehrungsverwaltung
+- Funktionenverwaltung
+- Verteilerverwaltung
 
 Diese Themen werden in eigenständigen Anforderungen behandelt.
 

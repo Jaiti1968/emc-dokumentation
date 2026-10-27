@@ -6,7 +6,7 @@
 
 **Status:** Abgeschlossen
 
-**Abschlussdatum:** _(eintragen)_
+**Abschlussdatum:** 26.10.2026 (Produktivsetzung mit Release v1.2.0)
 
 ---
 
@@ -272,15 +272,61 @@ Mit Phase 3 wurden folgende Projektziele erreicht:
 
 Nicht Bestandteil dieser Phase:
 
-- Excel-Export der Geburtstagsliste
-- CSV-Export der Geburtstagsliste
-- weitere Berichtstypen (z. B. Ehrungen, Zugehörigkeit)
+- Weitere Berichtstypen (z. B. Ehrungen, Zugehörigkeit)
+
+Für die Geburtstagsliste sind bewusst keine Excel- oder
+CSV-Exporte vorgesehen. Die Browseransicht und der PDF-Bericht
+decken den fachlichen Bedarf vollständig ab.
+
+Die gemeinsame Reporting-Architektur unterstützt grundsätzlich
+weitere Ausgabeformate. Ob diese benötigt werden, wird für
+jeden zukünftigen Bericht gesondert entschieden.
 
 Diese Erweiterungen können auf der nun geschaffenen Reporting-Infrastruktur aufgebaut werden.
 
 ---
 
-# 11. Fazit
+# 11. Produktivsetzung mit Release v1.2.0
+
+Die Umsetzung der Phase 3 wurde mit dem Release `v1.2.0`
+am 26.10.2026 erfolgreich produktiv gesetzt.
+
+## Deployment
+
+- Backend PROD auf Version `1.2.0` aktualisiert
+- Frontend PROD auf Version `1.2.0` aktualisiert
+- Backend vor Frontend bereitgestellt
+- Versionsanzeige in der Anwendung überprüft
+- Rollback-Sicherungen der vorherigen Versionen vorhanden
+
+## Produktive Funktionsprüfung
+
+Folgende Prüfungen wurden erfolgreich durchgeführt:
+
+- Anmeldung an der produktiven Anwendung
+- Aufruf der Reporting-Funktionen
+- Mitgliederverzeichnis als PDF im Querformat
+- Geburtstagsliste als PDF im Hochformat
+- Altersberechnung
+- Rote Kennzeichnung runder Geburtstage
+- Darstellung unbekannter Geburtstagsdaten
+- Versionsanzeige für Frontend und Backend
+- Uptime-Kuma-Monitoring ohne Auffälligkeiten
+
+## Ergebnis
+
+Die Reporting-Funktionen der Phasen 1 bis 3 stehen
+seit dem 26.10.2026 in der produktiven EMC Mitgliederverwaltung
+zur Verfügung.
+
+Die Produktivsetzung wurde erfolgreich abgeschlossen.
+
+Die weiteren Reporting-Phasen bleiben davon unabhängig
+und werden gesondert geplant.
+
+---
+
+# 12. Fazit
 
 Mit Abschluss der Phase 3 steht die Geburtstagsliste vollständig in der neuen Webanwendung zur Verfügung.
 
