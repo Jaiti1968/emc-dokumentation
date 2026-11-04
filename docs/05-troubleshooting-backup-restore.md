@@ -839,12 +839,13 @@ BE v...
 Beispiel:
 
 ```text
-localhost | Proxy → localhost:8080 | FE v1.0.1-SNAPSHOT | BE v1.1.1-SNAPSHOT
+PROD | FE v1.2.1 | BE v1.2.1
 ```
 
 Abgleich:
 
 - entspricht Frontend-Version dem erwarteten Build?
+- Docker-Image-Tag (`:dev` bzw. `:prod`) und tatsächliche Anwendungsversion getrennt prüfen; der Tag ist keine Versionsnummer.
 - entspricht Backend-Version dem erwarteten Deployment?
 - passen Frontend und Backend fachlich zusammen?
 
@@ -877,8 +878,8 @@ docker logs emc-mitglieder-backend-prod --tail 50
 
 Empfohlene Maßnahmen:
 
-- Browser Hard Reload
-- Container Redeploy
+- Browser Hard Reload (nur zur Diagnose; siehe BUG-003)
+- Container mit dem vorgesehenen Image neu erstellen (Redeploy; ein bloßer Neustart übernimmt kein neu getaggtes Image)
 - korrekten Build prüfen
 - Artefakte im Build-Verzeichnis kontrollieren
 
@@ -911,14 +912,20 @@ Aktuelles Verhalten:
 Beispiele:
 
 ```text
-202605220300.emc_mitglieder.sql.gz
-202605220300.emc_mitglieder_dev.sql.gz
-latest.emc_mitglieder.sql.gz
+202611020300.emc_mitglieder_dev.sql.gz
+202611020300.emc_mitglieder_prod.sql.gz
+202611020300.emc_finanzen_dev.sql.gz
+202611020300.emc_finanzen_prod.sql.gz
 latest.emc_mitglieder_dev.sql.gz
+latest.emc_mitglieder_prod.sql.gz
+latest.emc_finanzen_dev.sql.gz
+latest.emc_finanzen_prod.sql.gz
 ```
 
 > [!NOTE]
-> Die dedizierte Test-Datenbank (`emc_mitglieder_test`) ist nicht Bestandteil des regulären Backup-Konzepts.
+> Die Test-Datenbanken (`emc_mitglieder_test` und `emc_mitglieder_migration_test`) sind nicht Bestandteil der hier bestätigten regulären Sicherungen. Die Datenbank `emc_monitoring` ist ebenfalls nicht Teil der vier hier bestätigten Anwendungsdatenbank-Backups.
+
+Die alten Links `latest.emc_mitglieder.sql.gz` und `latest.emc_finanzen.sql.gz` verweisen auf Sicherungen vom 04.06.2026 und dürfen nicht als aktuelle PROD-Sicherung verwendet werden.
 
 ---
 
@@ -927,7 +934,7 @@ latest.emc_mitglieder_dev.sql.gz
 Aktueller Backup-Pfad:
 
 ```text
-/volume1/home/JaitiNissi1968/docker/backups/mariadb
+/volume1/docker/backups/mariadb
 ```
 
 Container prüfen:
@@ -942,17 +949,7 @@ Mount prüfen:
 docker inspect mariadb-backup | grep -A 20 Mounts
 ```
 
-Hinweis:
-
-Dieser Pfad ist historisch gewachsen.
-
-Eine spätere Standardisierung auf:
-
-```text
-/volume1/docker/backups/mariadb
-```
-
-ist vorgesehen.
+Hinweis: Der Pfad wurde anhand der vorhandenen DEV- und PROD-Backups für Mitgliederverwaltung und Finanzen am 02.11.2026 bestätigt.
 
 ---
 
@@ -998,7 +995,7 @@ docker exec mariadb mariadb-dump -u root -p emc_mitglieder_dev > emc_mitglieder_
 Backup erzeugen:
 
 ```bash
-docker exec mariadb mariadb-dump -u root -p emc_mitglieder > emc_mitglieder_prod_backup.sql
+docker exec mariadb mariadb-dump -u root -p emc_mitglieder_prod > emc_mitglieder_prod_backup.sql
 ```
 
 ---
@@ -1121,7 +1118,7 @@ Danach prüfen:
 PROD Restore durchführen:
 
 ```bash
-docker exec -i mariadb mariadb -u root -p emc_mitglieder < emc_mitglieder_prod_backup.sql
+docker exec -i mariadb mariadb -u root -p emc_mitglieder_prod < emc_mitglieder_prod_backup.sql
 ```
 
 Danach prüfen:
@@ -1135,40 +1132,36 @@ Danach prüfen:
 
 ### 9.3 Restore automatisierter Backups
 
-Automatisierte Backups aus `mariadb-backup` liegen komprimiert als:
+Automatisierte Backups des Containers `mariadb-backup` liegen unter `/volume1/docker/backups/mariadb` als komprimierte `.sql.gz`-Dateien.
 
-```text
-.sql.gz
-```
+Aktuelle Sicherungsnamen und zugehörige **Zieldatenbanken**:
 
-Beispiele:
+| Umgebung | Backup-Datei (`latest.*`) | Zieldatenbank |
+| --- | --- | --- |
+| Mitglieder DEV | `latest.emc_mitglieder_dev.sql.gz` | `emc_mitglieder_dev` |
+| Mitglieder PROD | `latest.emc_mitglieder_prod.sql.gz` | `emc_mitglieder_prod` |
+| Finanzen DEV | `latest.emc_finanzen_dev.sql.gz` | `emc_finanzen_dev` |
+| Finanzen PROD | `latest.emc_finanzen_prod.sql.gz` | `emc_finanzen_prod` |
 
-```text
-202605220300.emc_mitglieder.sql.gz
-latest.emc_mitglieder.sql.gz
-```
+> [!WARNING]
+> Die alten Links `latest.emc_mitglieder.sql.gz` und `latest.emc_finanzen.sql.gz` zeigen auf Sicherungen vom 04.06.2026. Sie sind **keine aktuellen PROD-Backups**. Die früheren Datenbanken `emc_mitglieder` und `emc_finanzen` sind nicht die aktuellen PROD-Zieldatenbanken.
 
-Vor Restore Datei entpacken:
+Vor einem Restore den konkreten Sicherungsstand, die Vollständigkeit und die Zieldatenbank prüfen. Die bloße Existenz einer `.sql.gz`-Datei beweist keine Wiederherstellbarkeit. Bei PROD sind die Sicherheitsregeln aus Kapitel 8 und 9.5 verbindlich.
 
-```bash
-gzip -dk latest.emc_mitglieder.sql.gz
-```
-
-oder bei Erhalt der Originaldatei:
+Beispiel: Sicherung zunächst unter einem eindeutigen Namen entpacken (Originaldatei erhalten):
 
 ```bash
-gzip -dk 202605220300.emc_mitglieder.sql.gz
+cd /volume1/docker/backups/mariadb
+gzip -dc 202611020300.emc_mitglieder_prod.sql.gz > /tmp/emc_mitglieder_prod_restore.sql
 ```
 
-Danach Restore durchführen:
+Beispiel für den **nur nach Freigabe und Prüfung** auszuführenden PROD-Restore:
 
 ```bash
-docker exec -i mariadb mariadb -u root -p emc_mitglieder < latest.emc_mitglieder.sql
+docker exec -i mariadb mariadb -u root -p emc_mitglieder_prod < /tmp/emc_mitglieder_prod_restore.sql
 ```
 
-Hinweis:
-
-Automatisierte Backups enthalten den produktiven Datenstand zum Sicherungszeitpunkt.
+Für die anderen Datenbanken sind Sicherungsdatei und Zieldatenbank gemäß obiger Tabelle anzupassen. Die `latest.*`-Links verändern sich bei neuen Backups; vor jedem Restore den tatsächlichen Sicherungsstand kontrollieren.
 
 ---
 
@@ -1234,9 +1227,9 @@ Dieses Kapitel beschreibt Recovery bei fehlgeschlagenen Deployments.
 
 ### 10.1 Deployment-Artefakt-Rollback
 
-Neben Datenbank-Backups stehen archivierte Deployment-Artefakte für technische Rollbacks zur Verfügung.
+Neben Datenbank-Backups können archivierte Deployment-Artefakte und zuvor gesicherte Docker-Images für technische Rollbacks verwendet werden.
 
-Archivpfade:
+Archivpfade für ältere Build-Artefakte:
 
 Backend:
 
@@ -1250,41 +1243,18 @@ Frontend:
 /volume1/docker/build/archive/frontend
 ```
 
-Beispiele:
+Diese Verzeichnisse enthalten gegebenenfalls ältere JAR-Dateien bzw. Frontend-Builds. Vor Verwendung prüfen, ob das benötigte Artefakt tatsächlich vorhanden und mit dem aktuellen Betriebsverfahren kompatibel ist.
 
-Backend:
+**Aktueller Image-Standard:**
 
-```text
-mitglieder-backend-1.1.1-SNAPSHOT-dev-2026-05-23_20-15.jar
-mitglieder-backend-1.1.1-SNAPSHOT-prod-2026-05-23_20-15.jar
-```
+| Komponente | DEV | PROD |
+| --- | --- | --- |
+| Frontend | `emc-mitglieder-frontend:dev` | `emc-mitglieder-frontend:prod` |
+| Backend | `emc-mitglieder-backend:dev` | `emc-mitglieder-backend:prod` |
 
-Frontend:
+Diese Tags kennzeichnen die Umgebung, **nicht** die Anwendungsversion. Vor dem Ersetzen eines solchen Tags das bisherige Image anhand seiner Image-ID unter einem eindeutigen Rollback-Tag sichern. Vor einem Rollback sicherstellen, dass das archivierte Image tatsächlich verfügbar ist. Ein unverändertes `:prod` oder `:dev` garantiert nicht, dass noch die vorherige Version dahinterliegt.
 
-```text
-dist-dev-2026-05-23_20-15
-dist-prod-2026-05-23_20-15
-```
-
-Geeignet für:
-
-- fehlerhaftes Deployment
-- falscher Frontend Build
-- falsches Backend-Artefakt
-- schnelle Rückkehr auf letzten funktionierenden technischen Stand
-
-Nicht geeignet für:
-
-- Datenbank-Inkonsistenzen
-- fachliche Datenfehler
-- Schema-/Datenmigrationsprobleme
-
-Dafür sind Datenbank-Backups erforderlich.
-
-> [!IMPORTANT]
-> Deployment-Artefakt-Rollback ersetzt kein Datenbank-Restore.
-
-Wenn zwischenzeitlich API-, Datenmodell- oder Datenbankschemaänderungen erfolgt sind, kann zusätzlich ein Restore erforderlich sein.
+Ein Rollback des Anwendungsimages behebt keine Datenbank-Inkonsistenz. Bei API- oder Schemaänderungen vorab die Kompatibilität des früheren Anwendungsstands prüfen. Ein Datenbank-Restore ist eine gesonderte, risikobehaftete Maßnahme nach Kapitel 8 und 9 und darf nicht automatisch zusammen mit dem Image-Rollback erfolgen.
 
 ---
 
@@ -1292,32 +1262,19 @@ Wenn zwischenzeitlich API-, Datenmodell- oder Datenbankschemaänderungen erfolgt
 
 Typische Fälle:
 
-- leere Seite
-- Assets fehlen
-- Deployment fehlerhaft
-- falsches dist
+- weiße Seite oder fehlende Assets
+- fehlerhaftes Deployment
+- falscher Frontend-Build
 
-Prüfen:
+Vorgehen:
 
-```bash
-ls -la /volume1/docker/build/mitglieder-frontend-dev/dist
-ls -la /volume1/docker/build/mitglieder-frontend-prod/dist
-```
+1. Tatsächliche Frontend-Version über die Systeminformationen der Anwendung und laufende Image-ID mit dem erwarteten Stand abgleichen.
+2. Container-Logs und HTTP-Antworten prüfen. Bei weißen Seiten auch Browser-Cache und Netzwerkanfragen untersuchen (siehe BUG-003).
+3. Falls ein Rollback erforderlich ist, das vorherige, eindeutig identifizierte Docker-Image aus der Sicherung auswählen oder ein geprüftes archiviertes Build-Artefakt erneut als Image bauen.
+4. Den jeweiligen Umgebungs-Tag `:dev` bzw. `:prod` gezielt auf das gewünschte Image setzen und den betreffenden Container über das zugehörige Compose-/Portainer-Deployment **neu erstellen**.
+5. Danach Version, Funktion und Uptime-Kuma-Status prüfen.
 
-Recovery:
-
-alten Build wiederherstellen
-
-danach:
-
-Portainer Redeploy
-
-oder Container Neustart:
-
-```bash
-docker restart emc-mitglieder-frontend-dev
-docker restart emc-mitglieder-frontend-prod
-```
+**Wichtig:** `docker restart` startet nur den bestehenden Container neu. Dadurch wird kein neues oder zurückgesetztes Image übernommen. DEV und PROD nicht gemeinsam neu starten, wenn nur eine Umgebung betroffen ist.
 
 ---
 
@@ -1325,48 +1282,19 @@ docker restart emc-mitglieder-frontend-prod
 
 Typische Fälle:
 
-- falsche JAR
-- Build Fehler
-- Spring Startfehler
-- Deployment fehlgeschlagen
+- fehlerhafte oder falsche JAR
+- Spring-Boot-Startfehler
+- fehlgeschlagenes Deployment
 
-Prüfen:
+Vorgehen:
 
-```bash
-find /volume1/docker/build/mitglieder-backend-dev -maxdepth 2 -type f -print
-find /volume1/docker/build/mitglieder-backend-prod -maxdepth 2 -type f -print
-```
+1. Backend-Logs, laufende Image-ID und angezeigte Anwendungsversion prüfen.
+2. Vor einem Rollback die Kompatibilität des früheren Backends mit dem aktuellen Datenbankschema kontrollieren.
+3. Gesichertes vorheriges Docker-Image verwenden oder ein geprüftes archiviertes JAR mit dem vorgesehenen Dockerfile erneut bauen.
+4. Für die betroffene Umgebung den festen Image-Tag `emc-mitglieder-backend:dev` oder `emc-mitglieder-backend:prod` auf das geprüfte Image setzen.
+5. Container über das zugehörige Compose-/Portainer-Deployment **neu erstellen**, anschließend Healthcheck, Login und betroffene Funktionen testen.
 
-Recovery:
-
-korrekte JAR wiederherstellen
-
-neu bauen:
-
-DEV:
-
-```bash
-cd /volume1/docker/build/mitglieder-backend-dev
-docker build -t emc-mitglieder-backend:dev .
-```
-
-PROD:
-
-```bash
-cd /volume1/docker/build/mitglieder-backend-prod
-docker build -t emc-mitglieder-backend:prod .
-```
-
-danach:
-
-Portainer Redeploy
-
-oder Container Neustart:
-
-```bash
-docker restart emc-mitglieder-backend-dev
-docker restart emc-mitglieder-backend-prod
-```
+Auch hier gilt: Ein reines `docker restart` aktiviert kein anderes Image. Ein Datenbank-Restore ist nicht Teil des normalen Backend-Rollbacks.
 
 ---
 
@@ -1449,7 +1377,7 @@ SHOW DATABASES;
 Verfügbare Tabellen prüfen:
 
 ```sql
-USE emc_mitglieder;
+USE emc_mitglieder_prod;
 SHOW TABLES;
 ```
 
@@ -1524,7 +1452,7 @@ docker logs mariadb-backup --tail 100
 Backup Dateien:
 
 ```bash
-ls -lah /volume1/home/JaitiNissi1968/docker/backups/mariadb
+ls -lah /volume1/docker/backups/mariadb
 ```
 
 Prüfen:

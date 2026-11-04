@@ -79,6 +79,7 @@
     - [7.3 Backend Release Ablauf](#73-backend-release-ablauf)
     - [7.4 Release mit Datenbankänderungen](#74-release-mit-datenbankänderungen)
     - [7.5 Release Freigaberegel](#75-release-freigaberegel)
+    - [7.6 Referenz: Release 1.2.1 vom 04.11.2026](#76-referenz-release-121-vom-04112026)
   - [8. Smoke Tests](#8-smoke-tests)
     - [8.1 Frontend Smoke Test](#81-frontend-smoke-test)
     - [8.2 Backend Smoke Test](#82-backend-smoke-test)
@@ -511,16 +512,18 @@ Die angegebene Version ist bei jedem Release entsprechend anzupassen.
 
 - Die Versionsanzeige im Frontend wird zum Build-Zeitpunkt aus `package.json` erzeugt.
 - Vor jedem Release-Build müssen beide Paketdateien kontrolliert werden.
-- Die Versionsnummer des Docker-Images muss zur eingebauten Frontend-Version passen.
+- Die Anwendungsversion muss zum geplanten Release passen; der Docker-Image-Tag bleibt umgebungsbezogen (`dev` oder `prod`).
 - Der Git-Release-Tag wird nach erfolgreicher Release-Vorbereitung gesondert erstellt.
 - Nach Abschluss eines Releases wird die Entwicklungsversion bei Beginn des nächsten Entwicklungsstands auf die vorgesehene Snapshot-Version angehoben.
 
-**Stand nach BL-020 / Release vom 26.10.2026:**
+**Historischer Referenzstand nach BL-020 / Release vom 26.10.2026:**
 
 | Umgebung | Frontend-Version |
 | -------- | ---------------- |
 | DEV      | `1.2.0-SNAPSHOT` |
 | PROD     | `1.2.0`          |
+
+**Aktueller dokumentierter Stand (04.11.2026):** PROD verwendet Frontend `1.2.1`. In DEV wird die Cache-Korrektur BUG-003 mit Frontend `1.2.2-SNAPSHOT` beobachtet. Die Backend-Release-Version in PROD ist `1.2.1`. DEV-Versionen sind vor jedem Deployment anhand der tatsächlich laufenden Anwendung zu prüfen.
 
 ---
 
@@ -558,13 +561,14 @@ docker version
 
 ### 4.4 Docker Image Build
 
-Das Frontend verwendet unterschiedliche nginx-Konfigurationen:
+Das Frontend verwendet umgebungsbezogene Docker-Image-Tags, unabhängig von der Anwendungsversion in `package.json`:
 
-```text
-docker/nginx-local.conf
-docker/nginx-dev.conf
-docker/nginx-prod.conf
-```
+| Umgebung | Fester Image-Tag | Beispiel für Anwendungsversion |
+| --- | --- | --- |
+| DEV | `emc-mitglieder-frontend:dev` | `1.2.2-SNAPSHOT` (BUG-003-Teststand) |
+| PROD | `emc-mitglieder-frontend:prod` | `1.2.1` |
+
+Die nginx-Konfiguration wird beim Build umgebungsbezogen ausgewählt.
 
 #### DEV Build
 
@@ -572,7 +576,7 @@ docker/nginx-prod.conf
 docker build \
   --platform linux/arm64 \
   --build-arg NGINX_CONF=nginx-dev.conf \
-  -t emc-mitglieder-frontend:1.2.0-SNAPSHOT .
+  -t emc-mitglieder-frontend:dev .
 ```
 
 #### PROD Build
@@ -581,98 +585,39 @@ docker build \
 docker build \
   --platform linux/arm64 \
   --build-arg NGINX_CONF=nginx-prod.conf \
-  -t emc-mitglieder-frontend:1.2.0 .
+  -t emc-mitglieder-frontend:prod .
 ```
 
-**Hinweis zur Versionierung:**
-
-Die angegebenen Image-Versionen entsprechen dem Stand nach Release `v1.2.0` vom 26.10.2026.
-
-Bei zukünftigen Deployments sind die Versionsnummern entsprechend anzupassen.
-
-Der Docker-Image-Tag muss mit der Version in `package.json` übereinstimmen. DEV verwendet die Snapshot-Version, PROD die stabile Release-Version.
-
-Wichtiger Hinweis:
-
-Ohne die Plattformangabe
-
-```text
---platform linux/arm64
-```
-
-kann das Image auf dem NAS nicht gestartet werden.
-
-Typischer Fehler:
-
-```text
-exec /docker-entrypoint.sh: exec format error
-```
+**Wichtig:** Der Tag `dev` oder `prod` bezeichnet die Zielumgebung, **nicht** die Anwendungsversion. Vor dem Build `package.json` und `package-lock.json` prüfen. Vor einem erneuten Build unter demselben Tag das bisherige Image sichern (Kapitel 4.5). Ohne `--platform linux/arm64` kann auf dem NAS ein `exec format error` auftreten.
 
 ---
 
 ### 4.5 Image Archivierung
 
-Frontend Images werden lokal archiviert.
+Die lokal gebauten Images werden vor dem Transfer als TAR-Datei exportiert. **Die Dateinamen enthalten die tatsächliche Anwendungsversion und die Zielumgebung**, auch wenn der Docker-Tag fest ist.
 
-Verzeichnis:
-
-```text
-docker-image-archive/
-```
-
-Beispiel:
-
-```text
-docker-image-archive/
-├── emc-mitglieder-frontend-1.2.0.tar
-└── emc-mitglieder-frontend-1.2.0-SNAPSHOT.tar
-```
-
-Image exportieren:
-
-#### DEV
+Beispiel (Versionsnummer bei jedem Build anpassen):
 
 ```bash
-docker save -o docker-image-archive/emc-mitglieder-frontend-1.2.0-SNAPSHOT.tar emc-mitglieder-frontend:1.2.0-SNAPSHOT
+docker save -o docker-image-archive/emc-mitglieder-frontend-1.2.2-SNAPSHOT-dev.tar emc-mitglieder-frontend:dev
+docker save -o docker-image-archive/emc-mitglieder-frontend-1.2.1-prod.tar emc-mitglieder-frontend:prod
 ```
 
-#### PROD
+Vor einem neuen PROD-Build oder -Import muss das **bisherige** Image für einen Rollback gesichert werden. Ein bloßer zusätzlicher Docker-Tag ist keine unabhängige Dateisicherung.
 
-```bash
-docker save -o docker-image-archive/emc-mitglieder-frontend-1.2.0.tar emc-mitglieder-frontend:1.2.0
-```
-
-**Archivierungsregel für PROD-Releases:**
-
-Vor dem Ersetzen einer produktiven Frontend-Version muss das bisherige Docker-Image für einen möglichen Rollback gesichert werden.
-
-Die zentrale NAS-Archivablage lautet:
+Zentrale NAS-Archivablage:
 
 ```text
 /volume1/docker/build/archive/frontend/
 ```
 
-Beim Release `v1.2.0` vom 26.10.2026 wurde das bisherige PROD-Image `1.1.1` unter folgendem Namen archiviert:
+Auf dem NAS kann das aktuell vorhandene PROD-Image vor dem Import des neuen Images beispielsweise wie folgt gesichert werden (Version und Datum vorher feststellen):
 
-```text
-emc-mitglieder-frontend-1.1.1-prod-2026-10-26.tar
+```bash
+docker save -o /volume1/docker/build/archive/frontend/emc-mitglieder-frontend-1.2.0-prod-2026-11-04.tar emc-mitglieder-frontend:prod
 ```
 
-Die Archivierung erfolgt unabhängig vom Transfer des neuen Images in das PROD-Build-Verzeichnis.
-
-**Wichtig:**
-
-- Vor einem PROD-Deployment prüfen, ob das bisherige Image noch vorhanden ist.
-- Das bisherige Image bei Bedarf mit `docker save` archivieren.
-- Die Archivdatei auf Vollständigkeit und plausible Dateigröße prüfen.
-- Archivierte Images nicht ohne gesonderte Entscheidung löschen.
-- Die tatsächlich archivierte Version im Changelog beziehungsweise in der Release-Dokumentation festhalten.
-
-Ziel:
-
-- nachvollziehbare Deployment-Historie
-- Rollback-Unterstützung
-- reproduzierbare Deployments
+**Das ist ein Befehlsbeispiel, kein Nachweis einer tatsächlich vorhandenen Archivdatei.** Version und Dateiname müssen zum realen Altstand passen. Archivdatei auf Existenz und plausible Größe prüfen und nicht ohne Entscheidung löschen. Historisch wurde beim Release `v1.2.0` das Frontend `1.1.1` archiviert.
 
 ---
 
@@ -680,58 +625,34 @@ Ziel:
 
 Zielverzeichnisse:
 
-DEV:
-
 ```text
 /volume1/docker/build/mitglieder-frontend-dev/image
-```
-
-PROD:
-
-```text
 /volume1/docker/build/mitglieder-frontend-prod/image
 ```
 
-#### DEV
+Beispiele für PowerShell (Dateinamen dem tatsächlichen Build anpassen):
 
 ```powershell
-scp .\docker-image-archive\emc-mitglieder-frontend-1.2.0-SNAPSHOT.tar `
-JaitiNissi1968@NAS-DH2300-C64C:/volume1/docker/build/mitglieder-frontend-dev/image/
+scp .\docker-image-archive\emc-mitglieder-frontend-1.2.2-SNAPSHOT-dev.tar `
+  JaitiNissi1968@NAS-DH2300-C64C:/volume1/docker/build/mitglieder-frontend-dev/image/
+
+scp .\docker-image-archive\emc-mitglieder-frontend-1.2.1-prod.tar `
+  JaitiNissi1968@NAS-DH2300-C64C:/volume1/docker/build/mitglieder-frontend-prod/image/
 ```
 
-#### PROD
-
-```powershell
-scp .\docker-image-archive\emc-mitglieder-frontend-1.2.0.tar `
-JaitiNissi1968@NAS-DH2300-C64C:/volume1/docker/build/mitglieder-frontend-prod/image/
-```
-
-Übertragung prüfen:
-
-```bash
-ls -lh /volume1/docker/build/mitglieder-frontend-prod/image
-```
-
-Erwartet:
-
-```text
-emc-mitglieder-frontend-1.2.0.tar
-```
+Übertragung und Dateigröße auf dem NAS prüfen.
 
 ---
 
 ### 4.7 Image Import auf NAS
 
-#### DEV
+**Vor dem PROD-Import zuerst das bisherige PROD-Image sichern (Kapitel 4.5).** Beim Laden eines TAR mit festem Tag wird die Zuordnung `:prod` beziehungsweise `:dev` auf das neue Image geändert; der laufende Container wird dadurch noch nicht ersetzt.
+
+Beispiele:
 
 ```bash
-docker load -i /volume1/docker/build/mitglieder-frontend-dev/image/emc-mitglieder-frontend-1.2.0-SNAPSHOT.tar
-```
-
-#### PROD
-
-```bash
-docker load -i /volume1/docker/build/mitglieder-frontend-prod/image/emc-mitglieder-frontend-1.2.0.tar
+docker load -i /volume1/docker/build/mitglieder-frontend-dev/image/emc-mitglieder-frontend-1.2.2-SNAPSHOT-dev.tar
+docker load -i /volume1/docker/build/mitglieder-frontend-prod/image/emc-mitglieder-frontend-1.2.1-prod.tar
 ```
 
 Kontrolle:
@@ -740,120 +661,37 @@ Kontrolle:
 docker images emc-mitglieder-frontend
 ```
 
-Erwartet:
-
-```text
-emc-mitglieder-frontend:1.2.0-SNAPSHOT
-emc-mitglieder-frontend:1.2.0
-```
+Erwartete Tags: `emc-mitglieder-frontend:dev` und `emc-mitglieder-frontend:prod`. Die tatsächliche Anwendungsversion ist anschließend in der laufenden Anwendung zu prüfen.
 
 ---
 
 ### 4.8 Portainer Deployment
 
-Portainer öffnen.
-
-Stack auswählen:
-
-```text
-emc-mitglieder-frontend-dev
-```
-
-oder
-
-```text
-emc-mitglieder-frontend-prod
-```
-
-#### Deployment-Konfiguration prüfen
-
-Vor jedem Redeploy muss geprüft werden, dass die gewünschte Image-Version sowohl in der Compose-Datei als auch im Portainer Stack eingetragen ist.
-
-Quelle:
-
-```text
-/volume1/docker/compose/emc-mitglieder-frontend-dev/docker-compose.yml
-
-/volume1/docker/compose/emc-mitglieder-frontend-prod/docker-compose.yml
-```
-
-Beispiel DEV:
+Die Frontend-Stacks verwenden feste Tags:
 
 ```yaml
-image: emc-mitglieder-frontend:1.2.0-SNAPSHOT
+# DEV-Stack
+image: emc-mitglieder-frontend:dev
 ```
-
-Beispiel PROD:
 
 ```yaml
-image: emc-mitglieder-frontend:1.2.0
+# PROD-Stack
+image: emc-mitglieder-frontend:prod
 ```
 
-Zusätzlich prüfen:
+Vor dem Redeploy die Übereinstimmung der Compose-Konfigurationen in **EMC-INFRA**, auf dem **NAS** (`/volume1/docker/compose/emc-mitglieder-frontend-dev/` bzw. `...-prod/`) und im **Portainer Stack Editor** prüfen.
 
-Portainer
-→ Stack
-→ Editor
+**Bei einem reinen Anwendungsversionwechsel bleiben diese Image-Referenzen unverändert.** Nur wenn die Compose-Konfiguration selbst geändert wird, müssen alle drei Stellen angepasst und die Änderung in EMC-INFRA versioniert werden.
 
-EMC-INFRA
-→ compose
-→ emc-mitglieder-frontend-dev oder emc-mitglieder-frontend-prod
-→ docker-compose.yml
-
-Bei Versionswechseln ist die Image-Version in
-
-- EMC-INFRA
-- der NAS-Compose-Datei
-- der Portainer Stack Definition
-
-konsistent anzupassen.
-
-Erst danach darf ein Redeploy durchgeführt werden.
-
-**Hinweis zur Konfigurationskonsistenz:**
-
-Die Compose-Dateien im Repository EMC-INFRA bilden den versionierten Sollzustand der Infrastruktur ab.
-
-Änderungen an den Image-Versionen müssen deshalb an allen drei Stellen nachvollzogen werden:
-
-1. EMC-INFRA (Git-Repository)
-2. NAS unter `/volume1/docker/compose/`
-3. Portainer Stack Editor
-
-Nach erfolgreichem Deployment sind die Änderungen im Repository EMC-INFRA zu committen und nach GitHub zu übertragen.
-
-Beim Release `v1.2.0` wurde dies für beide Frontend-Umgebungen durchgeführt (EMC-INFRA Commit `164ab02`).
+Nach dem Image-Import den passenden Stack (`emc-mitglieder-frontend-dev` oder `emc-mitglieder-frontend-prod`) in Portainer redeployen. **Sicherstellen, dass der Container tatsächlich neu erstellt wird** und nicht das alte Image weiterläuft.
 
 Kontrolle:
-
-```bash
-docker ps --format "table {{.Names}}\t{{.Image}}"
-```
-
-Erwartet:
-
-```text
-emc-mitglieder-frontend-dev    emc-mitglieder-frontend:1.2.0-SNAPSHOT
-emc-mitglieder-frontend-prod   emc-mitglieder-frontend:1.2.0
-```
-
-Aktion:
-
-```text
-Redeploy
-```
-
-Nach dem Redeploy prüfen:
 
 ```bash
 docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}" | grep frontend
 ```
 
-Optional:
-
-```bash
-docker logs emc-mitglieder-frontend-prod --tail 30
-```
+Der feste Tag allein beweist nicht, welche Version läuft. Anschließend über den Info-Dialog die tatsächliche Frontend-Version, die Backend-Version und die Umgebung prüfen; außerdem den fachlichen Smoke-Test durchführen.
 
 ---
 
@@ -870,6 +708,11 @@ Nach Deployment prüfen:
 - Mitgliederliste lädt
 - Frontend-Version korrekt
 - Backend-Version korrekt
+- Laufzeitumgebung in der Kopfzeile stimmt mit der tatsächlich angesprochenen Backend-Umgebung überein (DEV/PROD)
+- Info-Dialog ist für angemeldete Benutzer erreichbar und zeigt plausible System- und Versionsinformationen
+- In der Kopfzeile erscheinen keine technischen Verbindungsdetails wie `localhost` oder Proxy-Angaben
+
+**Hinweis zur Kopierfunktion (BL-019 / BL-026):** Unter HTTP kann das Kopieren aus dem Info-Dialog wegen Browser-Sicherheitsanforderungen scheitern. Die verbindliche Prüfung für DEV und PROD nach HTTPS-Einführung gehört zu BL-026; ein fehlgeschlagener HTTP-Kopierversuch darf nicht als erfolgreicher Test dokumentiert werden.
 
 **Zusätzliche Smoke Tests für BL-020 Reporting:**
 
@@ -1712,6 +1555,8 @@ Vor PROD prüfen:
 
 ### 6.5 Aktueller Migrationsstatus
 
+**Stand 04.11.2026:** BL-027 hat 14 fachliche Datumsfelder in sieben MariaDB-Tabellen von `DATETIME` auf `DATE` umgestellt. Die Änderung wurde in TEST, DEV und PROD geprüft. Die Verarbeitung im Backend verwendet für diese fachlichen Datumsfelder `LocalDate`; die bestehende Access-Anbindung wurde auf Kompatibilität geprüft.
+
 Aktuell existiert keine automatisierte Schema-Migration (z. B. Flyway/Liquibase).
 
 Datenbankänderungen erfolgen kontrolliert und manuell.
@@ -1798,13 +1643,10 @@ Der Frontend-Release erfolgt nach erfolgreicher Entwicklung und Prüfung in DEV.
    npm run build
    ```
 
-7. Docker-Image für `linux/arm64` mit `nginx-prod.conf` und dem Release-Tag `X.Y.Z` erstellen.
-8. Bisheriges PROD-Docker-Image für einen möglichen Rollback archivieren.
+7. Docker-Image für `linux/arm64` mit `nginx-prod.conf` und dem festen Image-Tag `emc-mitglieder-frontend:prod` erstellen.
+8. Bisheriges PROD-Docker-Image **vor Überschreiben des festen Tags `prod`** für einen möglichen Rollback archivieren.
 9. Neues Docker-Image exportieren, auf das NAS übertragen und dort importieren.
-10. Image-Version in allen drei Compose-Konfigurationen konsistent eintragen:
-    - EMC-INFRA
-    - NAS-Compose-Datei
-    - Portainer Stack Editor
+10. Feste Image-Referenz `emc-mitglieder-frontend:prod` in EMC-INFRA, NAS-Compose-Datei und Portainer Stack Editor auf Übereinstimmung prüfen; bei reinem Versionswechsel keine Compose-Änderung.
 11. Frontend-PROD-Stack in Portainer neu bereitstellen.
 12. Technischen und fachlichen PROD-Smoke-Test durchführen.
 13. Frontend-Version und Backend-Kompatibilität prüfen.
@@ -1815,7 +1657,7 @@ Der Frontend-Release erfolgt nach erfolgreicher Entwicklung und Prüfung in DEV.
 
 **Wichtige Hinweise:**
 
-- Der PROD-Docker-Image-Tag muss mit der Frontend-Version in `package.json` übereinstimmen.
+- Der PROD-Docker-Image-Tag bleibt `prod`; die Anwendungsversion in `package.json` muss der geplanten Release-Version entsprechen.
 - Der Git-Release-Tag wird separat erstellt und nicht durch `npm version` erzeugt.
 - Ein Frontend-Release darf nur mit einer kompatiblen Backend-Version produktiv gesetzt werden.
 - Nach einem abgeschlossenen Release wird die nächste Snapshot-Version erst im Rahmen der weiteren Entwicklung vorbereitet.
@@ -1909,14 +1751,18 @@ Die technische Fehlerbeschreibung und der Sicherheitshinweis sind in Kapitel 5.9
 
 ### 7.4 Release mit Datenbankänderungen
 
-Zusätzlicher Ablauf:
+**Zusätzlicher Ablauf:**
 
-1. DEV DB Änderung
-2. DEV Anwendungstest
-3. PROD Backup
-4. PROD DB Änderung
-5. Backend Deployment
-6. Smoke Test
+1. Betroffene Tabellen und Felder sowie Auswirkungen auf Backend, Frontend und Access ermitteln.
+2. Datenbankänderung zunächst in TEST beziehungsweise DEV erproben und Datenintegrität prüfen.
+3. Betroffene Anwendungsversionen und die bestehende Access-Anbindung in DEV testen.
+4. Vor PROD-Migration ein geeignetes Datenbankbackup erstellen und dessen Vorhandensein prüfen.
+5. Reihenfolge von Datenbankänderung und Anwendungsdeployments anhand der Kompatibilität festlegen; die Reihenfolge ist nicht für jede Migration identisch.
+6. PROD-Datenbankänderung kontrolliert durchführen und Ergebnis prüfen.
+7. Backend und gegebenenfalls Frontend bereitstellen; technische und fachliche Smoke-Tests einschließlich Schreib- und Persistenzprüfung durchführen.
+8. Access-Kompatibilität erneut prüfen und die tatsächlich durchgeführten Schritte im Ergebnisdokument festhalten.
+
+**Rollback-Grenze:** Ein Rollback von Backend oder Frontend stellt ein geändertes Datenbankschema nicht wieder her. Besonders nach Release `1.2.1` (Umstellung `DATETIME` → `DATE`) ist die Kompatibilität einer älteren Anwendungsversion mit dem aktuellen Schema vor einem Rollback zu klären. Ein Datenbank-Restore ist eine separate Entscheidung; dabei können zwischenzeitliche Änderungen verloren gehen.
 
 ---
 
@@ -1930,6 +1776,19 @@ PROD Deployment nur wenn:
 - Build-Artefakte geprüft
 - richtige Zielumgebung gewählt
 - Datenbankänderungen abgesichert
+
+---
+
+### 7.6 Referenz: Release 1.2.1 vom 04.11.2026
+
+Am 04.11.2026 wurden Frontend und Backend in Version `1.2.1` produktiv bereitgestellt. Das Release umfasst BL-019 (Anzeige der tatsächlichen Backend-Laufzeitumgebung und Info-Dialog) sowie BL-027 (Harmonisierung fachlicher Datumsfelder).
+
+- BL-027: 14 Felder in sieben MariaDB-Tabellen von `DATETIME` auf `DATE` umgestellt; vorheriges PROD-Datenbankbackup und Access-Kompatibilitätsprüfung dokumentiert.
+- Qualitätssicherung: 99 Backend-Tests und 65 Frontend-Tests erfolgreich.
+- BL-019: Frontend-Release-Commit `6faaa61`; die Kopierfunktion ist unter HTTP browserabhängig eingeschränkt, Nachprüfung unter HTTPS in BL-026.
+- Historische Befehlsbeispiele für `1.2.0` in diesem Handbuch bleiben als Beispiele erhalten und sind **nicht** als aktuelle Image-/JAR-Version zu verwenden.
+
+**Quellen:** `BL-019-frontend-anzeige-laufzeitumgebung-ergebnis.md` und `BL-027-umsetzung-ergebnis-v0.3.md` in den jeweiligen Anforderungsordnern sowie `CHANGELOG.md`.
 
 ---
 
@@ -2017,7 +1876,7 @@ Uptime Kuma:
 
 ### 8.6 Versionsprüfung
 
-Nach Deployment Versionsanzeige prüfen.
+Nach Deployment Versionsanzeige und tatsächliche Backend-Laufzeitumgebung prüfen. Die Benutzeroberfläche zeigt die Umgebung in der Kopfzeile; weitere Versions- und Systeminformationen sind im Info-Dialog zugänglich. Die technische Gegenprüfung erfolgt über `/api/system/info`.
 
 Frontend:
 
@@ -2036,7 +1895,7 @@ PROD: FE v1.2.0 | BE v1.2.0
 DEV:  FE v1.2.0-SNAPSHOT | BE v1.2.0-SNAPSHOT
 ```
 
-Referenzstand nach dem Release vom 26.10.2026. Die erwarteten Versionsnummern sind bei jedem zukünftigen Release entsprechend anzupassen.
+**Historischer Referenzstand** nach dem Release vom 26.10.2026. Aktueller PROD-Stand seit 04.11.2026: `FE v1.2.1 | BE v1.2.1`. Das Frontend in DEV verwendet im Rahmen von BUG-003 inzwischen `1.2.2-SNAPSHOT`; die tatsächlich laufende Backend-Version ist gesondert zu prüfen. Die erwarteten Versionsnummern sind bei jedem zukünftigen Release entsprechend anzupassen.
 
 Zusätzlich prüfen:
 
@@ -2140,7 +1999,7 @@ Rollback-Maßnahmen erfolgen derzeit manuell und kontrolliert über Docker und P
 
 | Komponente | Bevorzugtes Verfahren                                                                                         |
 | ---------- | ------------------------------------------------------------------------------------------------------------- |
-| Frontend   | Vorheriges Docker-Image laden und versionsbezogenen Image-Tag in den Compose-Konfigurationen wiederherstellen |
+| Frontend   | Vorheriges Docker-Image laden, wieder dem festen Tag `prod` zuordnen und Container neu erstellen |
 | Backend    | Gesichertes Docker-Image erneut mit dem festen Tag `prod` versehen und Stack neu bereitstellen                |
 | Datenbank  | Gesonderte Prüfung und gegebenenfalls Wiederherstellung aus einem geeigneten Backup                           |
 
@@ -2158,7 +2017,7 @@ Rollback-Maßnahmen erfolgen derzeit manuell und kontrolliert über Docker und P
 
 **Wichtig:**
 
-Ein Docker-Rollback stellt zunächst nur die Anwendungskomponente wieder her. Bereits durchgeführte Datenbankänderungen werden dadurch nicht rückgängig gemacht.
+Ein Docker-Rollback stellt zunächst nur die Anwendungskomponente wieder her. Bereits durchgeführte Datenbankänderungen werden dadurch nicht rückgängig gemacht. **Seit Release `1.2.1` ist insbesondere die `DATE`-Schemaänderung aus BL-027 zu beachten:** Ein Rücksprung auf `1.2.0` ist nicht ohne vorherige Kompatibilitätsprüfung freizugeben.
 
 Ein Datenbank-Restore ist deshalb gesondert zu bewerten und darf nicht automatisch als Bestandteil eines Anwendungs-Rollbacks erfolgen.
 
@@ -2172,73 +2031,31 @@ Die komponentenspezifischen Verfahren sind in Kapitel 9.2 bis 9.4 beschrieben.
 
 ### 9.2 Frontend Rollback
 
-Das Frontend verwendet versionsbezogene Docker-Image-Tags.
-
-Ein Rollback erfolgt durch Wiederherstellung eines älteren Docker-Images und anschließendes Redeployment des Frontend-Stacks.
+Das Frontend verwendet feste Image-Tags `dev` und `prod`. Ein Rollback setzt deshalb **nicht** die Compose-Image-Referenz auf eine Versionsnummer zurück. Stattdessen wird ein zuvor gesichertes Image wieder dem Tag `prod` zugeordnet.
 
 #### Rollback über archiviertes Docker-Image
 
-Vor einem PROD-Release wird das bisherige Frontend-Image gesichert.
+1. Vorherige Anwendungsversion und vorhandene Archivdatei ermitteln. Archivierte TAR-Datei und tatsächliche Version müssen übereinstimmen.
+2. **Vor dem Zurücksetzen die Kompatibilität mit der aktuellen Backend-Version und dem Datenbankschema prüfen.** Insbesondere nach BL-027 (`DATETIME` → `DATE`) ist ein Rücksprung auf `1.2.0` nicht automatisch freigegeben.
+3. Das Archivimage laden. Beispiel mit **Platzhalter**:
 
-Beispiel für Release `v1.2.0` vom 26.10.2026:
+   ```bash
+   docker load -i /volume1/docker/build/archive/frontend/<archivdatei>.tar
+   ```
 
-| Eigenschaft                | Wert                            |
-| -------------------------- | ------------------------------- |
-| Neue Frontend-Version      | `1.2.0`                         |
-| Vorherige Frontend-Version | `1.1.1`                         |
-| Neues PROD-Image           | `emc-mitglieder-frontend:1.2.0` |
-| Rollback-Image             | `emc-mitglieder-frontend:1.1.1` |
+4. Geladenes Image ermitteln (`docker images`) und gegebenenfalls dem festen PROD-Tag zuordnen:
 
-Das bisherige Image wurde archiviert unter:
+   ```bash
+   docker tag <gesichertes-image-id-oder-tag> emc-mitglieder-frontend:prod
+   ```
 
-```text
-/volume1/docker/build/archive/frontend/emc-mitglieder-frontend-1.1.1-prod-2026-10-26.tar
-```
+   Falls das Archiv bereits den Tag `:prod` enthält, ist eine zusätzliche Zuordnung nicht erforderlich. Den neu zugeordneten Image-Inhalt vor dem Redeploy kontrollieren.
 
-**Rollback-Ablauf auf dem NAS:**
+5. Prüfen, dass EMC-INFRA, NAS-Compose und Portainer weiterhin `image: emc-mitglieder-frontend:prod` verwenden. **Keinen Versions-Tag in Compose eintragen.**
+6. Frontend-PROD-Stack in Portainer mit **Neuerstellung des Containers** redeployen.
+7. Laufende Anwendungsversion über den Info-Dialog kontrollieren; Anmeldung, Navigation, API-Kommunikation und betroffene Funktionen testen. Monitoring prüfen und Rollback dokumentieren.
 
-1. Prüfen, ob das bisherige Image noch lokal vorhanden ist:
-
-```bash
-docker images emc-mitglieder-frontend
-```
-
-2. Falls das Image nicht mehr vorhanden ist, aus dem Archiv wiederherstellen:
-
-```bash
-docker load -i /volume1/docker/build/archive/frontend/emc-mitglieder-frontend-1.1.1-prod-2026-10-26.tar
-```
-
-3. In allen drei Compose-Konfigurationen den Image-Tag auf die vorherige Version zurücksetzen:
-
-```yaml
-image: emc-mitglieder-frontend:1.1.1
-```
-
-Betroffene Konfigurationen:
-
-- EMC-INFRA: `compose/emc-mitglieder-frontend-prod/docker-compose.yml`
-- NAS: `/volume1/docker/compose/emc-mitglieder-frontend-prod/docker-compose.yml`
-- Portainer: Stack `emc-mitglieder-frontend-prod`, Editor
-
-4. Im Portainer den Frontend-PROD-Stack neu bereitstellen.
-
-5. Laufenden Container kontrollieren:
-
-```bash
-docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
-```
-
-6. Anschließend Frontend-Version, Anmeldung, Navigation, API-Kommunikation und die betroffenen Funktionen prüfen.
-
-**Wichtige Hinweise:**
-
-- Das Laden eines Docker-Images allein bewirkt noch keinen Rollback des laufenden Containers.
-- Der Portainer-Stack muss mit der vorherigen Image-Version neu bereitgestellt werden.
-- Die Änderung der Compose-Konfiguration ist auch im Repository EMC-INFRA nachvollziehbar zu dokumentieren.
-- Ein Frontend-Rollback muss mit der eingesetzten Backend-Version kompatibel sein.
-- Bei einem gemeinsamen Frontend-/Backend-Rollback sind die Abhängigkeiten und die Reihenfolge der Wiederherstellung gesondert zu prüfen.
-- Ein Rollback gilt erst nach erfolgreichem Smoke Test als abgeschlossen.
+**Wichtig:** `docker load` und `docker tag` ersetzen keinen laufenden Container. Ein Rollback der Anwendung setzt auch keine Datenbankänderung zurück.
 
 ---
 
@@ -2355,13 +2172,13 @@ emc-mitglieder-frontend-1.1.1-prod-2026-10-26.tar
 
 Die archivierte Datei enthält das bisherige Frontend-Docker-Image und kann bei einem Rollback mit `docker load` wiederhergestellt werden.
 
-Die Frontend-Images werden mit versionsbezogenen Tags betrieben, beispielsweise:
+Die Frontend-Images werden inzwischen mit festen Umgebungstags betrieben, beispielsweise:
 
 ```text
-emc-mitglieder-frontend:1.2.0
+emc-mitglieder-frontend:prod
 ```
 
-Bei einem Rollback müssen die Image-Referenzen in den betroffenen Compose-Konfigurationen entsprechend angepasst werden.
+Bei einem Rollback wird das gesicherte ältere Image wieder dem festen Tag `prod` zugeordnet und der Container neu erstellt. Die Compose-Image-Referenz bleibt dabei unverändert.
 
 Das konkrete Wiederherstellungsverfahren ist in Kapitel 9.2 beschrieben.
 

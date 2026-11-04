@@ -200,6 +200,104 @@ Nächste geplante Änderungen werden hier gesammelt.
 
 ---
 
+## [2026-11-04] BL-019 und BL-027 – Produktivsetzung Release v1.2.1
+
+### Versionen
+
+| Komponente | Version |
+| ---------- | ------- |
+| Frontend   | `1.2.1` |
+| Backend    | `1.2.1` |
+
+---
+
+### Added
+
+- BL-019: Anzeige der tatsächlichen Backend-Laufzeitumgebung `LOCAL`, `DEV` oder `PROD` in der Frontend-Kopfzeile.
+- BL-019: Info-Dialog für alle angemeldeten Benutzer mit Frontend- und Backend-Version, Build-Zeitpunkten, aktiven Spring-Profilen sowie Benutzername und Rolle.
+- BL-019: Funktion „Informationen kopieren“ zur Übernahme der Diagnoseangaben in die Zwischenablage.
+
+---
+
+### Changed
+
+- BL-019: Kopfzeile überarbeitet; statische Angaben `localhost` und `Proxy → localhost:8080` sowie die dauerhafte Versionsanzeige entfernt.
+- BL-019: Laufzeitumgebung wird aus `/api/system/info` ermittelt; bei fehlenden oder ungültigen Angaben wird keine unbelegte Umgebung angezeigt.
+- BL-027: Fachliche Datumsverarbeitung im Backend auf `LocalDate` vereinheitlicht; betroffene Frontend-Verarbeitung angepasst beziehungsweise geprüft.
+- BL-027: 14 fachliche Datumsfelder in sieben MariaDB-Tabellen von `DATETIME` auf `DATE` umgestellt. Technische Datums-/Zeitfelder außerhalb des festgelegten Umfangs bleiben unverändert.
+
+---
+
+### Technical
+
+| Bereich | Änderung |
+| ------- | -------- |
+| Frontend | Gemeinsamer Abruf der Backend-Systeminformationen für Kopfzeile und Info-Dialog; Aktualisierung beim Öffnen des Dialogs |
+| Frontend | Frontend-Build-Zeitpunkt über Vite bereitgestellt; vorhandener Anmeldekontext für Benutzername und Rolle genutzt |
+| Backend | BL-027: Fachliche Datumsfelder auf `LocalDate` harmonisiert; BL-019 nutzt den vorhandenen Endpunkt `/api/system/info` ohne zusätzlichen Backend-Endpunkt |
+| Datenbank | BL-027: Kontrollierte Schemaumstellung der 14 festgelegten Felder in TEST, DEV und PROD |
+| Deployment | Backend und Frontend als Release `1.2.1` in PROD bereitgestellt |
+
+---
+
+### Documentation
+
+| Dokument / Bereich | Änderung |
+| ------------------ | -------- |
+| BL-019 | Anforderungsdokument v0.4 und Ergebnisdokument v0.2 abgeschlossen |
+| BL-027 | Anforderungs- und Migrationsdokumentation sowie Ergebnisdokument v0.3 abgeschlossen |
+| `02.30-backlog.md` | BL-019 und BL-027 auf „Abgeschlossen am 04.11.2026“ gesetzt |
+| BL-026 | Erneute Prüfung der Kopierfunktion nach der HTTPS-Einführung als Abnahmekriterium aufgenommen |
+
+---
+
+### Deployment Notes
+
+| Prüfung / Maßnahme | Ergebnis |
+| ----------------- | -------- |
+| Backend und Frontend PROD `1.2.1` | Erfolgreich bereitgestellt |
+| MariaDB-PROD-Sicherung vor BL-027-Migration | Erstellt |
+| BL-027-Schemaumstellung in PROD | Erfolgreich geprüft |
+| Access-Kompatibilität nach Datumsumstellung | Geprüft |
+| Backend-Healthchecks / Uptime Kuma | Erfolgreich / grün |
+
+Zusätzliche Hinweise:
+
+- Die PROD-Datenbanksicherung vor der Migration liegt unter `/volume1/docker/backups/mariadb/emc_mitglieder_prod_pre_BL-027_20261104.sql`.
+- Die temporäre MariaDB-Migrationsdatenbank und die zugehörige ODBC-Testverbindung wurden nach Abschluss entfernt.
+- Die Funktion „Informationen kopieren“ aus BL-019 ist im bisherigen HTTP-Betrieb browserabhängig eingeschränkt. Die Funktionsprüfung unter HTTPS ist Bestandteil von BL-026; sie gilt noch nicht als erfolgreich abgenommen.
+- BUG-002 (fachliche Validierung zukünftiger Datumswerte) bleibt eine eigenständige offene Fehlerkorrektur.
+- BUG-003 (Browser-Cache) ist nicht Bestandteil von Release `1.2.1`; die Korrektur wird gesondert in DEV mit `1.2.2-SNAPSHOT` beobachtet.
+
+---
+
+### Tests
+
+| Bereich | Ergebnis |
+| ------- | -------- |
+| Backend-Tests | 99 erfolgreich |
+| Frontend-Tests | 65 erfolgreich |
+| Frontend-Build | Erfolgreich |
+| PROD-Funktions- und Versionsprüfungen | Erfolgreich im dokumentierten Umfang |
+| BL-019-Kopierfunktion unter HTTPS | Ausstehend (BL-026) |
+
+---
+
+### Datenbank
+
+| Thema | Status |
+| ----- | ------ |
+| Schemaänderung | Ja – 14 fachliche Datumsfelder in sieben Tabellen (`DATETIME` → `DATE`) |
+| Datenmigration | Ja – Typumstellung der vorhandenen Datumswerte |
+| Manuelles SQL | Ja – kontrollierte Umstellung im Rahmen von BL-027 |
+
+Hinweise:
+
+- TEST, DEV und PROD wurden entsprechend dem BL-027-Migrationsvorgehen geprüft.
+- Die vorhandenen Daten und die Access-Anbindung wurden nach der Umstellung kontrolliert.
+
+---
+
 ## [2026-05-25] Backend Testarchitektur abgeschlossen / Projektdokumentation konsolidiert
 
 ### Versionen

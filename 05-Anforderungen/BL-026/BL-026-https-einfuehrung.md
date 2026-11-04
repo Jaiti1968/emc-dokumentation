@@ -4,7 +4,7 @@
 
 **Ablagepfad:** `05-Anforderungen/BL-026/BL-026-https-einfuehrung.md`
 
-**Stand:** 27.10.2026
+**Stand:** 04.11.2026
 
 **Status:** Offen
 
@@ -125,6 +125,10 @@ Folgende Funktionen müssen unter HTTPS weiterhin ordnungsgemäß arbeiten:
 - Reporting
 - PDF-Downloads
 - Versions- und Systeminformationen
+
+Die im Rahmen von **BL-019** implementierte Funktion **„Informationen kopieren“** im Info-Dialog ist unter dem bisherigen HTTP-Betrieb aufgrund der Anforderungen der Browser-Zwischenablageschnittstelle nicht zuverlässig verfügbar. Nach der Umstellung auf HTTPS ist die Funktion in DEV und PROD gezielt zu prüfen. Die angezeigten Systeminformationen müssen über die Schaltfläche vollständig und ohne vertrauliche Zugangsdaten in die Zwischenablage übernommen werden können.
+
+Eine erneute Implementierung der Kopierfunktion ist nicht vorgesehen, sofern die bestehende Umsetzung unter HTTPS ordnungsgemäß funktioniert. Bleibt die Funktion eingeschränkt, ist die Ursache zu untersuchen und vor der Abnahme zu beheben.
 
 ---
 
@@ -257,6 +261,7 @@ BL-026 gilt als erfolgreich umgesetzt, wenn:
 - Session-Timeout und Abmeldung weiterhin funktionieren
 - die bestehenden Fachfunktionen erfolgreich geprüft wurden
 - Reporting und PDF-Downloads funktionieren
+- die Funktion **„Informationen kopieren“** aus BL-019 im Info-Dialog in DEV und PROD unter HTTPS erfolgreich geprüft wurde und die vorgesehenen Systeminformationen vollständig in die Zwischenablage übernimmt
 - DEV und PROD erfolgreich umgestellt wurden
 - Monitoring und Healthchecks angepasst und funktionsfähig sind
 - ein dokumentiertes Recovery- beziehungsweise Rollback-Verfahren vorliegt
@@ -286,6 +291,7 @@ In der Produkt- und Projektdokumentation werden die fachlichen Anforderungen, En
 **Anforderungen:**
 
 - BL-014 – Security Hardening
+- BL-019 – Frontend-Anzeige der Laufzeitumgebung (Info-Dialog und Kopierfunktion)
 - BL-026 – HTTPS-Einführung für die EMC Mitgliederverwaltung
 
 **Entscheidungen:**
