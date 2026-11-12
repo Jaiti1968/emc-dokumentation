@@ -200,6 +200,55 @@ Nächste geplante Änderungen werden hier gesammelt.
 
 ---
 
+## [2026-11-12] Frontend – Sicherheitsupdate der Vitest-Testabhängigkeiten
+
+### Versionen
+
+| Komponente | Version |
+| ---------- | ------- |
+| Frontend (PROD) | `1.2.3` (unverändert) |
+| Backend (PROD) | `1.2.1` (unverändert) |
+| Testwerkzeug Vitest | `3.2.7` → `4.1.12` |
+
+---
+
+### Changed
+
+- Vitest als Entwicklungsabhängigkeit von Version `3.2.7` auf `4.1.12` aktualisiert.
+- Transitive Abhängigkeiten einschließlich der zuvor betroffenen Pakete `@vitest/mocker` und `tinypool` über die Paketauflösung aktualisiert.
+- Ausschließlich `package.json` und `package-lock.json` im Frontend-Repository geändert.
+
+---
+
+### Fixed
+
+- Drei zuvor von `npm audit` gemeldete Sicherheitsprobleme im Testwerkzeug-Umfeld behoben (eine moderate und zwei kritische Meldungen).
+- Abschließende Prüfung mit `npm audit`: **0 gemeldete Schwachstellen**.
+
+---
+
+### Technical
+
+| Bereich | Ergebnis |
+| ------- | -------- |
+| Git-Branch | `fix/frontend-vitest-security` |
+| Änderungs-Commit | `8f2add6` |
+| Merge-Commit nach `master` | `d24483b` |
+| Frontend-Tests | 7 Testdateien, 65 von 65 Tests erfolgreich mit Vitest `4.1.12` |
+| Frontend-Produktionsbuild | `npm run build` erfolgreich mit Vite `6.4.6` |
+| Sicherheitsprüfung | `npm audit`: 0 Schwachstellen |
+
+---
+
+### Deployment Notes
+
+- **Kein neues DEV- oder PROD-Deployment** für dieses Update durchgeführt; betroffen ist ausschließlich das Entwicklungs- und Testwerkzeug.
+- Die produktive Frontend-Version bleibt `1.2.3`, das produktive Backend bleibt `1.2.1`.
+- Der bestehende Frontend-Release-Tag `v1.2.3` verweist weiterhin auf Release-Commit `e1991a3`; die Testwerkzeug-Aktualisierung wurde anschließend in `master` übernommen.
+- Keine Änderungen an der Datenbank.
+
+---
+
 ## [2026-11-12] BUG-003 – Frontend-Release v1.2.3 in PROD
 
 ### Versionen
