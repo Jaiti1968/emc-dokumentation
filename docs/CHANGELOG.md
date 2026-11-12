@@ -200,6 +200,99 @@ Nächste geplante Änderungen werden hier gesammelt.
 
 ---
 
+## [2026-11-12] BUG-003 – Frontend-Release v1.2.3 in PROD
+
+### Versionen
+
+| Komponente | Version |
+| ---------- | ------- |
+| Frontend   | `1.2.3` |
+| Backend    | `1.2.1` (unverändert) |
+
+---
+
+### Changed
+
+- Nginx-Konfigurationen für LOCAL, DEV und PROD angepasst: Die HTML-Einstiegsdatei `index.html` wird mit `Cache-Control: no-cache` ausgeliefert.
+- Frontend-Abhängigkeiten aktualisiert; `npm audit --omit=dev` meldet keine bekannten Schwachstellen in Produktionsabhängigkeiten.
+- Frontend von `1.2.3-SNAPSHOT` auf Release `1.2.3` umgestellt. Version `1.2.2` wurde nicht als eigenständiges PROD-Release bereitgestellt.
+
+---
+
+### Fixed
+
+- BUG-003: Fehlende explizite Cache-Steuerung der HTML-Einstiegsdatei behoben, um die Verwendung veralteter Frontend-Einstiegsdateien nach Deployments zu vermeiden.
+- Abgrenzung: Ob dies die alleinige Ursache aller zuvor beobachteten weißen Browserseiten war, ist nicht abschließend nachgewiesen. BUG-003 wurde nach erfolgreichen DEV- und PROD-Prüfungen am 12.11.2026 abgeschlossen.
+
+---
+
+### Technical
+
+| Bereich | Änderung |
+| ------- | -------- |
+| Frontend / Nginx | `Cache-Control: no-cache` für `/index.html`; SPA-Routenbehandlung geprüft |
+| Frontend | Abhängigkeiten aktualisiert; 65 Vitest-Tests erfolgreich |
+| Deployment | ARM64-Image `emc-mitglieder-frontend:1.2.3`, fester PROD-Tag `:prod` |
+| Git | Release-Commit `e1991a3`, annotierter Tag `v1.2.3` |
+| Backend | Keine Änderung; PROD bleibt auf `1.2.1` |
+
+---
+
+### Documentation
+
+| Dokument / Bereich | Änderung |
+| ------------------ | -------- |
+| `05-Anforderungen/BUG-003/BUG-003-frontend-browser-cache.md` | Fehlerkorrektur abgeschlossen am 12.11.2026 |
+| `05-Anforderungen/BUG-003/frontend-1.2.3-SNAPSHOT-dev-deployment-ergebnis.md` | DEV-Deployment vom 09.11.2026 dokumentiert |
+| `05-Anforderungen/BUG-003/BUG-003-prod-deployment-ergebnis.md` | PROD-Deployment vom 12.11.2026 dokumentiert |
+| `02-Projekt/02.30-backlog.md` | BUG-003 nach „Abgeschlossen“ verschoben |
+
+---
+
+### Deployment Notes
+
+| Prüfung / Maßnahme | Ergebnis |
+| ----------------- | -------- |
+| Frontend PROD `1.2.3` | Erfolgreich bereitgestellt am 12.11.2026 |
+| Frontend-Build | 12.11.2026, 14:24:03 |
+| Container `emc-mitglieder-frontend-prod` | Running; neues Image bestätigt |
+| Anmeldung / Backend-Verbindung | Erfolgreich |
+| Mitgliederverzeichnis und Geburtstagsliste | Erfolgreich geprüft |
+| HTTP-Header für `/index.html` | `200 OK`, `Cache-Control: no-cache` |
+| Rollback-Sicherung | `emc-mitglieder-frontend:rollback-prod-1.2.1` vorhanden |
+
+Zusätzliche Hinweise:
+
+- PROD-Container am 12.11.2026 über Portainer neu erstellt; Image-ID `93a1d860a51b` bestätigt.
+- DEV war zuvor mehrere Tage ohne erneut gemeldete weiße Browserseite beobachtet worden.
+- Das Backend und die Datenbank wurden bei diesem Deployment nicht verändert.
+- Drei gemeldete Schwachstellen in Entwicklungs- und Testabhängigkeiten (Vitest-Umfeld) bleiben zur separaten Bearbeitung offen.
+
+---
+
+### Tests
+
+| Bereich | Ergebnis |
+| ------- | -------- |
+| Frontend-Unit-Tests | 65 von 65 erfolgreich |
+| Frontend-Build | Erfolgreich |
+| `npm audit --omit=dev` | 0 Schwachstellen |
+| Docker-Build ARM64 / `nginx -t` | Erfolgreich |
+| PROD-Funktions- und Versionsprüfungen | Erfolgreich |
+| PROD-Cache-Control-Prüfung | Erfolgreich |
+
+---
+
+### Datenbank
+
+| Thema | Status |
+| ----- | ------ |
+| Schemaänderung | Nein |
+| Datenmigration | Nein |
+| manuelles SQL | Nein |
+
+---
+
 ## [2026-11-04] BL-019 und BL-027 – Produktivsetzung Release v1.2.1
 
 ### Versionen

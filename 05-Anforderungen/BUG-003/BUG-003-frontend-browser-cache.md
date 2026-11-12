@@ -119,5 +119,5 @@ Status:
 
 ```text
 BUG-003
-IN ARBEIT
+ERLEDIGT
 ```
